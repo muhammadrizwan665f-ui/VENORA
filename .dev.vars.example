@@ -1,0 +1,6 @@
+# Copy to .dev.vars for `npm run preview` (local Cloudflare runtime). Never commit .dev.vars.
+NEXT_PUBLIC_SITE_URL=http://localhost:8787
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+ADMIN_EMAILS=owner@your-domain.com
