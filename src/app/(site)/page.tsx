@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import ProductCard from '@/components/ProductCard';
 import Reveal from '@/components/Reveal';
+import HeroScene from '@/components/HeroScene';
 import SmartImage from '@/components/SmartImage';
 import { ArrowIcon, CrownIcon, DiamondIcon, GlobeIcon, HeadsetIcon, ShieldIcon } from '@/components/Icons';
 import { getCategories, getProducts } from '@/lib/data';
@@ -33,7 +34,7 @@ export default async function HomePage() {
         aria-label="VENORA JEWELRY"
         className="relative isolate -mt-[var(--header-h)] flex min-h-[600px] items-end overflow-hidden bg-ink md:min-h-[660px] md:items-center lg:min-h-[720px]"
       >
-        <div className="absolute inset-y-0 right-0 w-full md:w-[74%]">
+        <div className="hero-parallax-img absolute inset-y-0 right-0 w-full md:w-[74%]">
           <Image
             src="/images/hero.jpg"
             alt="A model wearing VENORA serpent jewelry beside a golden serpent"
@@ -46,8 +47,11 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/55 to-transparent md:from-ink md:via-ink/40 md:to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/20 to-ink/30" />
 
+        <HeroScene />
+
         <div className="container-x relative z-10 pb-14 pt-[calc(var(--header-h)+40px)] md:pb-10">
-          <div className="max-w-xl animate-fadeUp">
+          <div className="hero-tilt max-w-xl">
+          <div className="animate-fadeUp">
             <h1 className="leading-none">
               <span className="block bg-gradient-to-b from-white via-[#f3dfb6] to-gold bg-clip-text font-serif text-[64px] font-light tracking-[0.04em] text-transparent sm:text-[88px] lg:text-[112px]">
                 VENORA
@@ -61,6 +65,7 @@ export default async function HomePage() {
             <Link href="/shop" className="btn-outline mt-7 !border-gold/90 bg-black/30 !px-7 backdrop-blur-sm">
               Shop the Collection <ArrowIcon />
             </Link>
+            </div>
           </div>
         </div>
       </section>

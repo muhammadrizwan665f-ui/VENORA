@@ -4,6 +4,7 @@ import Link from 'next/link';
 import SmartImage from './SmartImage';
 import WhatsAppButton from './WhatsAppButton';
 import { useStore } from './StoreProvider';
+import { useTilt } from './useTilt';
 import { HeartIcon, StarIcon } from './Icons';
 import { effectivePrice, type ProductSummary } from '@/lib/types';
 import { money } from '@/lib/whatsapp';
@@ -33,12 +34,19 @@ export function PriceTag({ product, size = 'md' }: { product: Pick<ProductSummar
 
 export default function ProductCard({ product, priority }: { product: ProductSummary; priority?: boolean }) {
   const { addToCart, toggleWish, isWished } = useStore();
+  const tilt = useTilt<HTMLElement>();
   const wished = isWished(product.id);
   const soldOut = product.stock <= 0;
   const href = `/product/${product.slug}`;
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-gold/25 bg-gradient-to-b from-coal to-ink transition duration-500 hover:-translate-y-1 hover:border-gold/70 hover:shadow-[0_20px_50px_-20px_rgba(214,173,104,0.45)]">
+    <article
+      ref={tilt.ref}
+      onPointerMove={tilt.onPointerMove}
+      onPointerLeave={tilt.onPointerLeave}
+      className="tilt-card group relative flex h-full flex-col overflow-hidden rounded-2xl border border-gold/25 bg-gradient-to-b from-coal to-ink hover:border-gold/70 hover:shadow-[0_20px_50px_-20px_rgba(214,173,104,0.45)]"
+    >
+      <span aria-hidden="true" className="tilt-glare" />
       <div className="relative">
         <Link href={href} className="relative block aspect-[4/3.6] overflow-hidden bg-black" aria-label={product.name}>
           <SmartImage

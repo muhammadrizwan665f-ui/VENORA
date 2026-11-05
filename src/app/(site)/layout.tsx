@@ -1,5 +1,5 @@
 import StoreProvider from '@/components/StoreProvider';
-import Loader from '@/components/Loader';
+import SerpentIntro from '@/components/SerpentIntro';
 import AnnouncementBar from '@/components/AnnouncementBar';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -28,7 +28,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <a href="#main" className="sr-only z-[300] rounded bg-gold px-4 py-2 text-ink focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
         Skip to content
       </a>
-      <Loader />
+      <SerpentIntro />
       <AnnouncementBar />
       <Header categories={categories.map((c) => ({ slug: c.slug, name: c.name }))} />
       <main id="main">{children}</main>

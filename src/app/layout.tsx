@@ -29,10 +29,13 @@ export const viewport: Viewport = { themeColor: '#050505', width: 'device-width'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${serif.variable} ${display.variable} ${script.variable} ${sans.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${serif.variable} ${display.variable} ${script.variable} ${sans.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: "try{if(sessionStorage.getItem('venora.veil'))document.documentElement.classList.add('veil-skip')}catch(e){}" }} />
+      </head>
       <body className="min-h-screen font-sans">
         <noscript>
-          <style>{`.reveal{opacity:1!important;transform:none!important}.loader-veil{display:none!important}`}</style>
+          <style>{`.reveal{opacity:1!important;transform:none!important}.intro-veil{display:none!important}`}</style>
         </noscript>
         {children}
       </body>

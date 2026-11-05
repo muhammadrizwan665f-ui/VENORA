@@ -72,7 +72,7 @@ body {
   }
   .gold-rule { height: 1px; background: linear-gradient(90deg, transparent, rgba(214, 173, 104, 0.7), transparent); }
 
-  .reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .reveal { opacity: 0; transform: perspective(900px) translateY(30px) rotateX(10deg); transition: opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1); }
   .reveal.is-in { opacity: 1; transform: none; }
 
   .prose-lux h2 { @apply mb-3 mt-10 font-serif text-2xl text-gold; }
@@ -83,12 +83,31 @@ body {
   .prose-lux a { @apply text-gold underline underline-offset-4 hover:text-ivory; }
 }
 
-/* page-load veil */
-.loader-veil { animation: loaderOut 0.9s ease 1.5s forwards; }
-@keyframes loaderOut { to { opacity: 0; visibility: hidden; } }
+/* 3D intro veil — failsafe hides it even if JS never runs */
+.intro-veil { animation: introFailsafe 0.6s ease 8s forwards; transition: opacity 0.9s ease; }
+.intro-veil.intro-leaving { opacity: 0; }
+.veil-skip .intro-veil { display: none; }
+@keyframes introFailsafe { to { opacity: 0; visibility: hidden; } }
+html.intro-lock, html.intro-lock body { overflow: hidden; }
+.intro-text { opacity: 0; transform-origin: center; transition: transform 1.1s cubic-bezier(.5,0,.9,.4), opacity .8s ease; }
+.intro-run .intro-text { animation: introText 1.5s cubic-bezier(.2,.7,.2,1) 1.5s forwards; }
+.intro-leaving .intro-text { transform: scale(1.5); opacity: 0 !important; animation: none; }
+@keyframes introText {
+  0% { opacity: 0; filter: blur(14px); letter-spacing: 0.7em; transform: scale(0.94); }
+  100% { opacity: 1; filter: blur(0); letter-spacing: 0.16em; transform: scale(1); }
+}
+
+/* hero parallax + 3D hover tilt */
+.hero-parallax-img { transform: translate3d(calc(var(--px, 0) * -16px), calc(var(--py, 0) * -10px), 0) scale(1.05); will-change: transform; }
+.hero-tilt { transform: perspective(1000px) rotateY(calc(var(--px, 0) * 5deg)) rotateX(calc(var(--py, 0) * -4deg)); will-change: transform; }
+.tilt-card { transform-style: preserve-3d; will-change: transform; }
+.tilt-glare { pointer-events: none; position: absolute; inset: 0; z-index: 2; opacity: 0; transition: opacity .3s; background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 240, 200, 0.2), transparent 55%); }
+.tilt-card:hover .tilt-glare { opacity: 1; }
+@media (hover: none) { .tilt-glare { display: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   .reveal { opacity: 1; transform: none; }
+  .hero-parallax-img, .hero-tilt { transform: none; }
 }
