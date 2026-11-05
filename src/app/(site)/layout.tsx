@@ -1,4 +1,5 @@
 import StoreProvider from '@/components/StoreProvider';
+import ThemeStyle from '@/components/ThemeStyle';
 import SerpentIntro from '@/components/SerpentIntro';
 import AnnouncementBar from '@/components/AnnouncementBar';
 import Header from '@/components/Header';
@@ -24,6 +25,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
   return (
     <StoreProvider settings={settings}>
+      <ThemeStyle theme={settings.theme} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} />
       <a href="#main" className="sr-only z-[300] rounded bg-gold px-4 py-2 text-ink focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
         Skip to content

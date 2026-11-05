@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { logout } from '../actions';
 import { requireAdmin } from '@/lib/auth';
+import { adminSettings } from '@/lib/adminData';
+import ThemeStyle from '@/components/ThemeStyle';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Admin', robots: { index: false, follow: false } };
@@ -15,8 +17,10 @@ const nav = [
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const email = await requireAdmin();
+  const { theme } = await adminSettings();
   return (
     <div className="min-h-screen bg-ink lg:grid lg:grid-cols-[230px_1fr]">
+      <ThemeStyle theme={theme} />
       <aside className="border-b border-gold/20 bg-coal lg:border-b-0 lg:border-r">
         <div className="flex items-center justify-between px-4 py-4 lg:block">
           <p className="gold-text font-display text-xl tracking-[0.3em]">VENORA</p>

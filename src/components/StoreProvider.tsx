@@ -172,7 +172,7 @@ export default function StoreProvider({ settings, children }: { settings: StoreS
       {children}
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-20 z-[90] flex justify-center px-4 sm:bottom-6">
         {toast && (
-          <div className="pointer-events-auto flex max-w-md animate-fadeUp items-center gap-3 rounded-full border border-gold/50 bg-coal/95 px-5 py-3 text-sm text-ivory shadow-[0_10px_40px_-10px_rgba(214,173,104,0.5)] backdrop-blur">
+          <div className="pointer-events-auto flex max-w-md animate-fadeUp items-center gap-3 rounded-full border border-gold/50 bg-coal/95 px-5 py-3 text-sm text-ivory shadow-[0_10px_40px_-10px_rgb(var(--c-gold)/0.5)] backdrop-blur">
             <span>{toast.message}</span>
             {toast.cta && (
               <Link href={toast.cta.href} className="whitespace-nowrap font-medium text-gold underline underline-offset-4">

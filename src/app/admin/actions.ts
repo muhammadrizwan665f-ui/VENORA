@@ -1,5 +1,6 @@
 'use server';
 
+import { isThemeId } from '@/lib/themes';
 import { redirect } from 'next/navigation';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { createAuthClient, createServiceClient } from '@/lib/supabase/server';
@@ -237,6 +238,7 @@ export async function saveSettings(formData: FormData): Promise<void> {
     youtube: url('youtube'),
     pinterest: url('pinterest'),
     facebook: url('facebook'),
+    theme: isThemeId(formData.get('theme')) ? String(formData.get('theme')) : 'noir-gold',
   };
   await createServiceClient().from('store_settings').upsert(row);
   refresh();

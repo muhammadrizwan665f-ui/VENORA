@@ -44,7 +44,7 @@ export default function ProductCard({ product, priority }: { product: ProductSum
       ref={tilt.ref}
       onPointerMove={tilt.onPointerMove}
       onPointerLeave={tilt.onPointerLeave}
-      className="tilt-card group relative flex h-full flex-col overflow-hidden rounded-2xl border border-gold/25 bg-gradient-to-b from-coal to-ink hover:border-gold/70 hover:shadow-[0_20px_50px_-20px_rgba(214,173,104,0.45)]"
+      className="tilt-card group relative flex h-full flex-col overflow-hidden rounded-2xl border border-gold/25 bg-gradient-to-b from-coal to-ink hover:border-gold/70 hover:shadow-[0_20px_50px_-20px_rgb(var(--c-gold)/0.45)]"
     >
       <span aria-hidden="true" className="tilt-glare" />
       <div className="relative">

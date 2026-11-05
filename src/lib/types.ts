@@ -46,6 +46,7 @@ export type StoreSettings = {
   youtube: string;
   pinterest: string;
   facebook: string;
+  theme: string; // see src/lib/themes.ts
 };
 
 export const ORDER_STATUSES = ['Pending', 'Confirmed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'] as const;

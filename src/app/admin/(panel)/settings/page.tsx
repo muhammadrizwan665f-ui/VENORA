@@ -1,5 +1,6 @@
 import ImageField from '@/components/admin/ImageField';
 import { adminSettings } from '@/lib/adminData';
+import ThemePicker from '@/components/admin/ThemePicker';
 import { saveSettings } from '../../actions';
 
 export default async function SettingsAdmin() {
@@ -10,6 +11,8 @@ export default async function SettingsAdmin() {
   return (
     <form action={saveSettings} className="max-w-3xl space-y-6">
       <h1 className="font-serif text-4xl text-gold">Store settings</h1>
+
+      <ThemePicker current={s.theme} />
 
       <section className="grid gap-4 rounded-2xl border border-gold/25 bg-coal p-5 sm:grid-cols-2">
         <h2 className="font-serif text-xl sm:col-span-2">WhatsApp ordering</h2>

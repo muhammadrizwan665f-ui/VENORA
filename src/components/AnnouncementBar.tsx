@@ -1,7 +1,7 @@
 const messages = ['Free Worldwide Shipping', 'Luxury Packaging Included', 'Exclusive Jewelry Collection'];
 
 const Spark = () => (
-  <svg viewBox="0 0 24 24" width="12" height="12" fill="#D6AD68" aria-hidden="true" className="shrink-0">
+  <svg viewBox="0 0 24 24" width="12" height="12" style={{ fill: 'rgb(var(--c-gold))' }} aria-hidden="true" className="shrink-0">
     <path d="M12 1.5 14 9l7.5 3L14 15l-2 7.5L10 15l-7.5-3L10 9l2-7.5Z" />
   </svg>
 );

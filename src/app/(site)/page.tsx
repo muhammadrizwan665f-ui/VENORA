@@ -53,7 +53,7 @@ export default async function HomePage() {
           <div className="hero-tilt max-w-xl">
           <div className="animate-fadeUp">
             <h1 className="leading-none">
-              <span className="block bg-gradient-to-b from-white via-[#f3dfb6] to-gold bg-clip-text font-serif text-[64px] font-light tracking-[0.04em] text-transparent sm:text-[88px] lg:text-[112px]">
+              <span className="block bg-gradient-to-b from-white via-gold-light to-gold bg-clip-text font-serif text-[64px] font-light tracking-[0.04em] text-transparent sm:text-[88px] lg:text-[112px]">
                 VENORA
               </span>
               <span className="mt-1 block pl-1 font-display text-sm uppercase tracking-[0.7em] text-gold sm:text-xl">Jewelry</span>
@@ -71,7 +71,7 @@ export default async function HomePage() {
       </section>
 
       {/* ───────── TRUST BAR ───────── */}
-      <section aria-label="Why Venora" className="border-y border-gold/30 bg-[linear-gradient(180deg,#0b0a08,#050505)]">
+      <section aria-label="Why Venora" className="border-y border-gold/30 bg-[linear-gradient(180deg,rgb(var(--c-coal)),rgb(var(--c-ink)))]">
         <ul className="container-x grid grid-cols-2 gap-y-6 py-6 lg:grid-cols-4 lg:py-7">
           {trust.map(({ Icon, a, b }, i) => (
             <li key={a} className={`flex items-center justify-center gap-3 px-2 sm:gap-4 ${i > 0 ? 'lg:border-l lg:border-gold/30' : ''} ${i % 2 === 1 ? 'border-l border-gold/30 lg:border-l' : ''}`}>
@@ -96,7 +96,7 @@ export default async function HomePage() {
           {categories.map((c, i) => (
             <Reveal as="li" key={c.slug} delay={i * 70}>
               <Link href={`/collections/${c.slug}`} className="group flex flex-col items-center text-center">
-                <span className="relative block h-[92px] w-[92px] rounded-full bg-gradient-to-br from-[#f1d9a2] via-gold to-gold-deep p-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.6)] transition duration-500 group-hover:scale-105 group-hover:shadow-[0_0_34px_-4px_rgba(214,173,104,0.8)] sm:h-[100px] sm:w-[100px] md:h-[120px] md:w-[120px] lg:h-[140px] lg:w-[140px]">
+                <span className="relative block h-[92px] w-[92px] rounded-full bg-gradient-to-br from-gold-light via-gold to-gold-deep p-[2px] shadow-[0_0_0_1px_rgba(0,0,0,0.6)] transition duration-500 group-hover:scale-105 group-hover:shadow-[0_0_34px_-4px_rgb(var(--c-gold)/0.8)] sm:h-[100px] sm:w-[100px] md:h-[120px] md:w-[120px] lg:h-[140px] lg:w-[140px]">
                   <span className="relative block h-full w-full overflow-hidden rounded-full bg-black">
                     <SmartImage src={c.image} alt={c.name} sizes="140px" className="object-cover transition duration-700 group-hover:scale-110" />
                   </span>
@@ -152,7 +152,7 @@ export default async function HomePage() {
 function Banner({ img, alt, href, cta, children }: { img: string; alt: string; href: string; cta: string; children: React.ReactNode }) {
   return (
     <Reveal>
-      <Link href={href} className="group relative flex h-44 overflow-hidden rounded-xl border border-gold/30 bg-coal transition duration-500 hover:border-gold/80 hover:shadow-[0_18px_40px_-18px_rgba(214,173,104,0.5)] sm:h-48">
+      <Link href={href} className="group relative flex h-44 overflow-hidden rounded-xl border border-gold/30 bg-coal transition duration-500 hover:border-gold/80 hover:shadow-[0_18px_40px_-18px_rgb(var(--c-gold)/0.5)] sm:h-48">
         <span className="relative block w-1/2 shrink-0">
           <SmartImage src={img} alt={alt} sizes="(min-width:768px) 17vw, 45vw" className="object-cover transition duration-700 group-hover:scale-110" />
           <span className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-coal" />

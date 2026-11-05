@@ -26,7 +26,7 @@ export default function Newsletter() {
 
   return (
     <section aria-labelledby="newsletter-title" className="relative overflow-hidden border-y border-gold/20 bg-coal">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(214,173,104,0.14),transparent_65%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgb(var(--c-gold)/0.14),transparent_65%)]" />
       <Reveal className="container-x relative py-14 text-center sm:py-16">
         <p className="font-script text-3xl text-gold sm:text-4xl">Join the Venora Circle</p>
         <h2 id="newsletter-title" className="mt-1 font-display text-lg uppercase tracking-[0.25em] text-ivory sm:text-xl">

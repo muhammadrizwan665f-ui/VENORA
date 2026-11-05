@@ -3,12 +3,20 @@
 @tailwind utilities;
 
 :root {
-  --ink: #050505;
-  --coal: #11100e;
-  --gold: #d6ad68;
-  --gold-deep: #b88a45;
-  --ivory: #f5f0e8;
-  --mute: #a9a096;
+  --c-ink: 5 5 5;
+  --c-coal: 17 16 14;
+  --c-gold: 214 173 104;
+  --c-gold-deep: 184 138 69;
+  --c-gold-light: 246 224 176;
+  --c-ivory: 245 240 232;
+  --c-mute: 169 160 150;
+  --hero-filter: none;
+  --ink: rgb(var(--c-ink));
+  --coal: rgb(var(--c-coal));
+  --gold: rgb(var(--c-gold));
+  --gold-deep: rgb(var(--c-gold-deep));
+  --ivory: rgb(var(--c-ivory));
+  --mute: rgb(var(--c-mute));
   --header-h: 72px;
 }
 @media (min-width: 768px) {
@@ -23,7 +31,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
-::selection { background: rgba(214, 173, 104, 0.35); color: #fff; }
+::selection { background: rgb(var(--c-gold) / 0.35); color: #fff; }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 4px; }
 
 /* scrollbar */
@@ -33,7 +41,7 @@ body {
   .container-x { @apply mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8; }
 
   .gold-text {
-    background: linear-gradient(180deg, #f6e0b0 0%, #d6ad68 48%, #b88a45 100%);
+    background: linear-gradient(180deg, rgb(var(--c-gold-light)) 0%, rgb(var(--c-gold)) 48%, rgb(var(--c-gold-deep)) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -41,8 +49,8 @@ body {
 
   .btn-gold {
     @apply relative inline-flex min-h-[44px] items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-2.5 text-center font-sans text-xs font-semibold uppercase tracking-[0.14em] text-ink transition duration-300;
-    background: linear-gradient(135deg, #ecd096 0%, #d6ad68 45%, #b88a45 100%);
-    box-shadow: 0 0 0 1px rgba(214, 173, 104, 0.5), 0 6px 20px -8px rgba(214, 173, 104, 0.6);
+    background: linear-gradient(135deg, rgb(var(--c-gold-light)) 0%, rgb(var(--c-gold)) 45%, rgb(var(--c-gold-deep)) 100%);
+    box-shadow: 0 0 0 1px rgb(var(--c-gold) / 0.5), 0 6px 20px -8px rgb(var(--c-gold) / 0.6);
   }
   .btn-gold::after {
     content: '';
@@ -52,13 +60,13 @@ body {
     transform: translateX(-120%);
     transition: transform 0.7s ease;
   }
-  .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(236, 208, 150, 0.9), 0 12px 28px -8px rgba(214, 173, 104, 0.8); }
+  .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgb(var(--c-gold-light) / 0.9), 0 12px 28px -8px rgb(var(--c-gold) / 0.8); }
   .btn-gold:hover::after { transform: translateX(120%); }
   .btn-gold:active { transform: translateY(0); }
   .btn-gold:disabled { @apply cursor-not-allowed opacity-50; transform: none; }
 
   .btn-outline {
-    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-gold px-6 py-2.5 text-center font-sans text-xs font-medium uppercase tracking-[0.14em] text-gold transition duration-300 hover:bg-gold/10 hover:shadow-[0_0_24px_-6px_rgba(214,173,104,0.7)];
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-gold px-6 py-2.5 text-center font-sans text-xs font-medium uppercase tracking-[0.14em] text-gold transition duration-300 hover:bg-gold/10 hover:shadow-[0_0_24px_-6px_rgb(var(--c-gold) / 0.7)];
   }
   .btn-outline:disabled { @apply cursor-not-allowed opacity-50; }
 
@@ -70,7 +78,7 @@ body {
   .section-title {
     @apply font-display text-lg font-medium uppercase tracking-[0.22em] text-gold sm:text-xl;
   }
-  .gold-rule { height: 1px; background: linear-gradient(90deg, transparent, rgba(214, 173, 104, 0.7), transparent); }
+  .gold-rule { height: 1px; background: linear-gradient(90deg, transparent, rgb(var(--c-gold) / 0.7), transparent); }
 
   .reveal { opacity: 0; transform: perspective(900px) translateY(30px) rotateX(10deg); transition: opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1); }
   .reveal.is-in { opacity: 1; transform: none; }
@@ -98,10 +106,11 @@ html.intro-lock, html.intro-lock body { overflow: hidden; }
 }
 
 /* hero parallax + 3D hover tilt */
+.hero-parallax-img img { filter: var(--hero-filter, none); }
 .hero-parallax-img { transform: translate3d(calc(var(--px, 0) * -16px), calc(var(--py, 0) * -10px), 0) scale(1.05); will-change: transform; }
 .hero-tilt { transform: perspective(1000px) rotateY(calc(var(--px, 0) * 5deg)) rotateX(calc(var(--py, 0) * -4deg)); will-change: transform; }
 .tilt-card { transform-style: preserve-3d; will-change: transform; }
-.tilt-glare { pointer-events: none; position: absolute; inset: 0; z-index: 2; opacity: 0; transition: opacity .3s; background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 240, 200, 0.2), transparent 55%); }
+.tilt-glare { pointer-events: none; position: absolute; inset: 0; z-index: 2; opacity: 0; transition: opacity .3s; background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgb(var(--c-gold-light) / 0.2), transparent 55%); }
 .tilt-card:hover .tilt-glare { opacity: 1; }
 @media (hover: none) { .tilt-glare { display: none; } }
 

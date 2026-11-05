@@ -5,11 +5,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: '#050505',
-        coal: '#11100E',
-        gold: { DEFAULT: '#D6AD68', deep: '#B88A45' },
-        ivory: '#F5F0E8',
-        mute: '#A9A096',
+        ink: 'rgb(var(--c-ink) / <alpha-value>)',
+        coal: 'rgb(var(--c-coal) / <alpha-value>)',
+        gold: { DEFAULT: 'rgb(var(--c-gold) / <alpha-value>)', deep: 'rgb(var(--c-gold-deep) / <alpha-value>)', light: 'rgb(var(--c-gold-light) / <alpha-value>)' },
+        ivory: 'rgb(var(--c-ivory) / <alpha-value>)',
+        mute: 'rgb(var(--c-mute) / <alpha-value>)',
       },
       fontFamily: {
         serif: ['var(--font-serif)', 'Georgia', 'serif'],

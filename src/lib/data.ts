@@ -36,6 +36,7 @@ export const rowToCategory = (r: any): Category => ({
   sort: Number(r.sort ?? 0),
 });
 
+import { DEFAULT_THEME, isThemeId } from './themes';
 export const rowToSettings = (r: any): StoreSettings => ({
   storeName: r.store_name || defaultSettings.storeName,
   tagline: r.tagline || defaultSettings.tagline,
@@ -53,6 +54,7 @@ export const rowToSettings = (r: any): StoreSettings => ({
   youtube: r.youtube ?? '',
   pinterest: r.pinterest ?? '',
   facebook: r.facebook ?? '',
+  theme: isThemeId(r.theme) ? r.theme : DEFAULT_THEME,
 });
 
 export const getSettings = cache(async (): Promise<StoreSettings> => {

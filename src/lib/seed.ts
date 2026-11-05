@@ -17,6 +17,7 @@ export const defaultSettings: StoreSettings = {
   youtube: '',
   pinterest: '',
   facebook: '',
+  theme: 'noir-gold',
 };
 
 export const seedCategories: Category[] = [

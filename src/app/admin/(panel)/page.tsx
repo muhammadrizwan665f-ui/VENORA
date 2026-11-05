@@ -44,10 +44,10 @@ export default async function Dashboard() {
             const h = (d.revenue / max) * H;
             return (
               <g key={d.day}>
-                <rect x={i * bw + 6} y={H - h} width={bw - 12} height={Math.max(h, 1)} rx="3" fill="#D6AD68" opacity={d.revenue ? 1 : 0.2}>
+                <rect x={i * bw + 6} y={H - h} width={bw - 12} height={Math.max(h, 1)} rx="3" style={{ fill: 'rgb(var(--c-gold))' }} opacity={d.revenue ? 1 : 0.2}>
                   <title>{`${d.day}: ${money(d.revenue, sym)} (${d.orders} orders)`}</title>
                 </rect>
-                <text x={i * bw + bw / 2} y={H + 16} textAnchor="middle" fontSize="9" fill="#A9A096">{d.day.slice(8)}</text>
+                <text x={i * bw + bw / 2} y={H + 16} textAnchor="middle" fontSize="9" style={{ fill: 'rgb(var(--c-mute))' }}>{d.day.slice(8)}</text>
               </g>
             );
           })}

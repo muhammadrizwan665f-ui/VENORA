@@ -18,8 +18,25 @@ const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t 
 /* ───────── sprites (drawn once) ───────── */
 let SPR: { bead: HTMLCanvasElement; fog: HTMLCanvasElement; glow: HTMLCanvasElement } | null = null;
 
+type RGB = [number, number, number];
+function themeRGB(name: string, fallback: RGB): RGB {
+  try {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim().split(/\s+/).map(Number);
+    if (v.length === 3 && v.every((n) => Number.isFinite(n))) return v as RGB;
+  } catch {
+    /* ignore */
+  }
+  return fallback;
+}
+const mix = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+const css = (c: RGB, a = 1) => `rgba(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])},${a})`;
+
 function sprites() {
   if (SPR) return SPR;
+  const gold = themeRGB('--c-gold', [214, 173, 104]);
+  const deep = themeRGB('--c-gold-deep', [184, 138, 69]);
+  const light = themeRGB('--c-gold-light', [246, 224, 176]);
+  const black: RGB = [8, 6, 4];
   const mk = (s: number) => {
     const c = document.createElement('canvas');
     c.width = c.height = s;
@@ -29,17 +46,17 @@ function sprites() {
   const bead = mk(S);
   const b = bead.getContext('2d')!;
   const g = b.createRadialGradient(S * 0.36, S * 0.32, 2, S * 0.5, S * 0.5, S * 0.62);
-  g.addColorStop(0, '#fff6d8');
-  g.addColorStop(0.18, '#f0cf8a');
-  g.addColorStop(0.5, '#c9984f');
-  g.addColorStop(0.82, '#6b4a1c');
-  g.addColorStop(1, '#2a1b08');
+  g.addColorStop(0, css(mix(light, [255, 255, 255], 0.6)));
+  g.addColorStop(0.18, css(light));
+  g.addColorStop(0.5, css(mix(gold, deep, 0.5)));
+  g.addColorStop(0.82, css(mix(deep, black, 0.6)));
+  g.addColorStop(1, css(mix(deep, black, 0.88)));
   b.fillStyle = g;
   b.beginPath();
   b.arc(S / 2, S / 2, S / 2 - 1, 0, Math.PI * 2);
   b.fill();
   // scale edge + specular
-  b.strokeStyle = 'rgba(40,25,8,0.55)';
+  b.strokeStyle = css(mix(deep, black, 0.85), 0.55);
   b.lineWidth = S * 0.035;
   b.beginPath();
   b.arc(S * 0.5, S * 0.62, S * 0.3, Math.PI * 0.15, Math.PI * 0.85);
@@ -59,9 +76,9 @@ function sprites() {
   const glow = mk(64);
   const gl = glow.getContext('2d')!;
   const gg = gl.createRadialGradient(32, 32, 0, 32, 32, 32);
-  gg.addColorStop(0, 'rgba(255,240,200,1)');
-  gg.addColorStop(0.25, 'rgba(240,200,120,0.6)');
-  gg.addColorStop(1, 'rgba(214,173,104,0)');
+  gg.addColorStop(0, css(mix(light, [255, 255, 255], 0.5)));
+  gg.addColorStop(0.25, css(gold, 0.6));
+  gg.addColorStop(1, css(gold, 0));
   gl.fillStyle = gg;
   gl.fillRect(0, 0, 64, 64);
 
@@ -230,6 +247,7 @@ export const INTRO_EXIT_START = 3.7;
 export const INTRO_DURATION = 4.6;
 
 export function createIntroScene(canvas: HTMLCanvasElement) {
+  SPR = null;
   const { st, resize } = makeStage(canvas);
   const sparks: Spark[] = [];
   let last = 0;
@@ -289,8 +307,8 @@ export function createIntroScene(canvas: HTMLCanvasElement) {
 
     // soft halo behind the ring
     const halo = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, R * 1.5 * zoom);
-    halo.addColorStop(0, `rgba(214,173,104,${0.16 * easeOut(clamp(T / 1.5))})`);
-    halo.addColorStop(1, 'rgba(214,173,104,0)');
+    halo.addColorStop(0, css(themeRGB('--c-gold', [214, 173, 104]), 0.16 * easeOut(clamp(T / 1.5))));
+    halo.addColorStop(1, css(themeRGB('--c-gold', [214, 173, 104]), 0));
     ctx.fillStyle = halo;
     ctx.fillRect(0, 0, w, h);
 
@@ -303,6 +321,7 @@ export function createIntroScene(canvas: HTMLCanvasElement) {
 
 /* ═════════════════════════ HERO: interactive serpent ═════════════════════════ */
 export function createHeroScene(canvas: HTMLCanvasElement) {
+  SPR = null;
   const { st, resize } = makeStage(canvas);
   const sparks: Spark[] = [];
   const dust: Spark[] = [];

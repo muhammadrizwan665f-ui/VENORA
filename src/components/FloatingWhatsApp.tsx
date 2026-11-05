@@ -13,8 +13,8 @@ export default function FloatingWhatsApp() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with VENORA JEWELRY on WhatsApp"
-      className="fixed bottom-4 right-4 z-[80] grid h-14 w-14 place-items-center rounded-full text-ink shadow-[0_10px_30px_-6px_rgba(214,173,104,0.7)] transition hover:scale-110 sm:bottom-6 sm:right-6"
-      style={{ background: 'linear-gradient(135deg,#ecd096,#d6ad68 45%,#b88a45)' }}
+      className="fixed bottom-4 right-4 z-[80] grid h-14 w-14 place-items-center rounded-full text-ink shadow-[0_10px_30px_-6px_rgb(var(--c-gold)/0.7)] transition hover:scale-110 sm:bottom-6 sm:right-6"
+      style={{ background: 'linear-gradient(135deg,rgb(var(--c-gold-light)),rgb(var(--c-gold)) 45%,rgb(var(--c-gold-deep)))' }}
     >
       <WhatsAppIcon width={28} height={28} />
     </a>
