@@ -2,8 +2,15 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "venora-jewelry",
   "main": ".open-next/worker.js",
-  "compatibility_date": "2025-03-25",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "compatibility_date": "2025-06-01",
+  "compatibility_flags": ["nodejs_compat", "nodejs_compat_populate_process_env", "global_fetch_strictly_public"],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // Keep variables/secrets that were added in the Cloudflare dashboard when this config is deployed.
+  "keep_vars": true,
+  // Public values (safe to commit): the Supabase URL and anon key. Secrets stay in the dashboard.
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://vzxqynkamjggloksfkzu.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6eHF5bmthbWpnZ2xva3Nma3p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4NjY3ODUsImV4cCI6MjEwOTQ0Mjc4NX0.xVfyPWFEYIpvuVJx0cLNzuzcDJgtToA_v1Pdpp_Hv2k"
+  }
 }
