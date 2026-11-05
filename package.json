@@ -13,6 +13,10 @@
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload"
   },
   "dependencies": {
+    "@fontsource/cinzel": "^5.0.0",
+    "@fontsource/cormorant-garamond": "^5.0.0",
+    "@fontsource/great-vibes": "^5.0.0",
+    "@fontsource/jost": "^5.0.0",
     "@supabase/ssr": "0.5.2",
     "@supabase/supabase-js": "2.46.1",
     "next": "^15.5.0",

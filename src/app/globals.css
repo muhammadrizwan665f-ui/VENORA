@@ -17,6 +17,10 @@
   --gold-deep: rgb(var(--c-gold-deep));
   --ivory: rgb(var(--c-ivory));
   --mute: rgb(var(--c-mute));
+  --font-serif: 'Cormorant Garamond';
+  --font-display: 'Cinzel';
+  --font-script: 'Great Vibes';
+  --font-sans: 'Jost';
   --header-h: 72px;
 }
 @media (min-width: 768px) {
