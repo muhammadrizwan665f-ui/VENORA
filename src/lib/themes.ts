@@ -14,28 +14,28 @@ export const THEMES: Theme[] = [
     vars: { ink: '5 5 5', coal: '17 16 14', gold: '214 173 104', goldDeep: '184 138 69', goldLight: '246 224 176', ivory: '245 240 232', mute: '169 160 150', heroFilter: 'none' },
   },
   {
-    id: 'midnight-sapphire',
-    name: 'Midnight Sapphire',
-    blurb: 'Deep navy night with icy platinum-blue accents.',
-    vars: { ink: '3 6 16', coal: '10 17 36', gold: '143 184 255', goldDeep: '74 118 201', goldLight: '220 234 255', ivory: '238 243 252', mute: '148 160 184', heroFilter: 'hue-rotate(175deg) saturate(0.9)' },
-  },
-  {
-    id: 'rose-quartz',
-    name: 'Rose Quartz',
-    blurb: 'Soft rose-gold glow on a warm dark plum.',
-    vars: { ink: '11 5 8', coal: '28 14 19', gold: '232 164 155', goldDeep: '183 110 121', goldLight: '255 222 214', ivory: '250 240 238', mute: '176 156 156', heroFilter: 'hue-rotate(-30deg) saturate(0.85)' },
-  },
-  {
     id: 'emerald-royale',
     name: 'Emerald Royale',
-    blurb: 'Dark forest green with bright emerald highlights.',
-    vars: { ink: '2 10 7', coal: '8 25 19', gold: '88 201 154', goldDeep: '38 138 100', goldLight: '196 244 222', ivory: '238 248 242', mute: '146 170 158', heroFilter: 'hue-rotate(100deg) saturate(0.9)' },
+    blurb: 'Deep forest green with champagne gold.',
+    vars: { ink: '3 10 8', coal: '10 27 21', gold: '212 180 118', goldDeep: '168 134 76', goldLight: '240 222 176', ivory: '240 245 240', mute: '150 170 160', heroFilter: 'none' },
   },
   {
     id: 'burgundy-velvet',
     name: 'Burgundy Velvet',
-    blurb: 'Wine-red velvet with warm copper-gold details.',
-    vars: { ink: '12 4 7', coal: '34 10 18', gold: '222 160 108', goldDeep: '168 96 52', goldLight: '247 214 176', ivory: '248 238 230', mute: '178 156 148', heroFilter: 'hue-rotate(-12deg) saturate(1.05)' },
+    blurb: 'Rich wine-red velvet with warm antique gold.',
+    vars: { ink: '14 5 8', coal: '40 13 21', gold: '214 170 112', goldDeep: '170 124 70', goldLight: '244 216 172', ivory: '248 238 232', mute: '182 158 152', heroFilter: 'none' },
+  },
+  {
+    id: 'platinum-noir',
+    name: 'Platinum Noir',
+    blurb: 'Graphite and silver. Cool, modern and minimal.',
+    vars: { ink: '8 8 10', coal: '24 24 28', gold: '205 209 217', goldDeep: '140 146 158', goldLight: '238 240 245', ivory: '244 245 247', mute: '150 153 160', heroFilter: 'grayscale(0.9) contrast(1.05)' },
+  },
+  {
+    id: 'rose-gold',
+    name: 'Rose Gold',
+    blurb: 'Warm blush and rose gold on soft dark mauve.',
+    vars: { ink: '12 7 8', coal: '32 19 20', gold: '226 170 150', goldDeep: '178 112 92', goldLight: '250 222 208', ivory: '250 242 238', mute: '180 160 156', heroFilter: 'hue-rotate(-14deg) saturate(1.05) sepia(0.15)' },
   },
 ];
 

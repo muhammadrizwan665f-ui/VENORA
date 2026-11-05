@@ -76,7 +76,7 @@ create table if not exists public.store_settings (
   youtube text not null default '',
   pinterest text not null default '',
   facebook text not null default '',
-  theme text not null default 'noir-gold' check (theme in ('noir-gold','midnight-sapphire','rose-quartz','emerald-royale','burgundy-velvet'))
+  theme text not null default 'noir-gold' check (theme in ('noir-gold','emerald-royale','burgundy-velvet','platinum-noir','rose-gold'))
 );
 insert into public.store_settings (id, phone) values (1, '+92 343 5295541') on conflict (id) do nothing;
 

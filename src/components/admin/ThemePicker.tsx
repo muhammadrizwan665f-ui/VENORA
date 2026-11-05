@@ -30,10 +30,12 @@ export default function ThemePicker({ current }: { current: string }) {
               className={`block cursor-pointer overflow-hidden rounded-xl border transition ${on ? 'border-gold ring-1 ring-gold' : 'border-gold/25 hover:border-gold/60'}`}
             >
               <input type="radio" name="theme" value={t.id} checked={on} onChange={() => setSel(t.id)} className="sr-only" />
-              <div className="flex h-20 items-end gap-2 p-3" style={{ background: `linear-gradient(135deg, ${c(t.vars.coal)}, ${c(t.vars.ink)})` }} aria-hidden="true">
-                <span className="h-9 w-9 rounded-full" style={{ background: `linear-gradient(135deg, ${c(t.vars.goldLight)}, ${c(t.vars.gold)} 50%, ${c(t.vars.goldDeep)})` }} />
-                <span className="h-2 flex-1 rounded-full" style={{ background: c(t.vars.gold), opacity: 0.8 }} />
-                <span className="h-2 w-8 rounded-full" style={{ background: c(t.vars.ivory), opacity: 0.7 }} />
+              <div className="p-3" style={{ background: c(t.vars.ink) }} aria-hidden="true">
+                <div className="rounded-lg p-2.5" style={{ background: c(t.vars.coal), border: `1px solid rgba(${t.vars.gold.split(' ').join(',')},0.35)` }}>
+                  <p className="font-serif text-sm" style={{ color: c(t.vars.ivory) }}>Serpent Necklace</p>
+                  <p className="text-[11px]" style={{ color: c(t.vars.mute) }}>$49.00</p>
+                  <span className="mt-2 inline-block rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider" style={{ background: `linear-gradient(135deg, ${c(t.vars.goldLight)}, ${c(t.vars.gold)} 50%, ${c(t.vars.goldDeep)})`, color: c(t.vars.ink) }}>Order on WhatsApp</span>
+                </div>
               </div>
               <div className="p-3">
                 <p className="flex items-center justify-between text-sm text-ivory">

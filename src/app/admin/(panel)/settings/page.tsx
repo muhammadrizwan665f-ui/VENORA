@@ -3,14 +3,23 @@ import { adminSettings } from '@/lib/adminData';
 import ThemePicker from '@/components/admin/ThemePicker';
 import { saveSettings } from '../../actions';
 
-export default async function SettingsAdmin() {
-  const s = await adminSettings();
+export default async function SettingsAdmin({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
+  const [s, sp] = await Promise.all([adminSettings(), searchParams]);
+  const err = typeof sp.error === 'string' ? sp.error : '';
+  const keyProblem = /row-level security|invalid api key|jwt|permission denied/i.test(err);
   const T = (name: string, label: string, v: string | number, extra: Record<string, string | number | boolean> = {}) => (
     <label className="block"><span className="label-lux">{label}</span><input name={name} defaultValue={v} className="input-lux" {...extra} /></label>
   );
   return (
     <form action={saveSettings} className="max-w-3xl space-y-6">
       <h1 className="font-serif text-4xl text-gold">Store settings</h1>
+      {sp.saved && <p role="status" className="rounded-lg border border-gold/50 bg-gold/10 px-4 py-3 text-sm text-gold">Settings saved. The store now uses your changes.</p>}
+      {err && (
+        <p role="alert" className="rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          Could not save: {err}
+          {keyProblem && ' — the SUPABASE_SERVICE_ROLE_KEY secret in Cloudflare looks wrong. It must be the service_role key (not the anon/publishable key) of the VENORA JEWELRY project.'}
+        </p>
+      )}
 
       <ThemePicker current={s.theme} />
 

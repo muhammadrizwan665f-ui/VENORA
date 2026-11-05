@@ -240,9 +240,11 @@ export async function saveSettings(formData: FormData): Promise<void> {
     facebook: url('facebook'),
     theme: isThemeId(formData.get('theme')) ? String(formData.get('theme')) : 'noir-gold',
   };
-  await createServiceClient().from('store_settings').upsert(row);
+  const { error } = await createServiceClient().from('store_settings').upsert(row);
+  if (error) redirect(`/admin/settings?error=${encodeURIComponent(error.message.slice(0, 240))}`);
   refresh();
   revalidatePath('/admin/settings');
+  redirect('/admin/settings?saved=1');
 }
 
 /* ───────── sample data ───────── */
