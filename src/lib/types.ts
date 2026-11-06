@@ -72,6 +72,7 @@ export type Order = {
   city: string;
   address: string;
   notes: string;
+  adminNotes: string; // private, admin only
   items: OrderItem[];
   subtotal: number;
   shipping: number;

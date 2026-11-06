@@ -48,6 +48,7 @@ create table if not exists public.orders (
   city text not null default '',
   address text not null default '',
   notes text not null default '',
+  admin_notes text not null default '',          -- private notes, never shown to customers
   items jsonb not null default '[]'::jsonb,       -- [{productId,slug,name,price,qty,variant}]
   subtotal numeric(12,2) not null default 0,
   shipping numeric(12,2) not null default 0,

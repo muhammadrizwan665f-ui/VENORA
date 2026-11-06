@@ -1,6 +1,7 @@
 'use server';
 
 import { isThemeId } from '@/lib/themes';
+import { safeBack, withNotice } from '@/lib/adminTools';
 import { redirect } from 'next/navigation';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { createAuthClient, createServiceClient } from '@/lib/supabase/server';
@@ -25,6 +26,12 @@ const num = (v: FormDataEntryValue | null, d = 0) => {
   const n = Number(typeof v === 'string' ? v : NaN);
   return Number.isFinite(n) ? n : d;
 };
+const ids = (formData: FormData) =>
+  formData.getAll('ids').filter((v): v is string => typeof v === 'string' && /^[0-9a-f-]{8,40}$/i.test(v)).slice(0, 500);
+/** Redirects back to the admin page the form came from, with a notice/error banner. */
+function finish(formData: FormData, fallback: string, key: 'notice' | 'error', message: string): never {
+  return redirect(withNotice(safeBack(formData.get('back'), fallback), key, message));
+}
 const safeUrl = (u: unknown) => typeof u === 'string' && (u.startsWith('/') || /^https:\/\//i.test(u)) && u.length < 1000;
 
 /* ───────── auth ───────── */
@@ -119,6 +126,72 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+export async function duplicateProduct(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const db = createServiceClient();
+  const { data: src } = await db.from('products').select('*').eq('id', text(formData.get('id'), 60)).maybeSingle();
+  if (!src) finish(formData, '/admin/products', 'error', 'Product not found.');
+  const { id: _id, created_at: _c, ...rest } = src as Record<string, unknown>;
+  void _id; void _c;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const suffix = attempt === 0 ? 'copy' : `copy-${Math.random().toString(36).slice(2, 6)}`;
+    const row = { ...rest, name: `${String(rest.name).slice(0, 120)} (Copy)`, slug: `${String(rest.slug).slice(0, 70)}-${suffix}`, sku: '', status: 'draft', best_seller: false };
+    const { data, error } = await db.from('products').insert(row).select('id').single();
+    if (!error && data) {
+      refresh();
+      redirect(`/admin/products/${data.id}`);
+    }
+    if (error && error.code !== '23505') finish(formData, '/admin/products', 'error', error.message);
+  }
+  finish(formData, '/admin/products', 'error', 'Could not create a unique copy. Try again.');
+}
+
+export async function quickUpdateProduct(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const id = text(formData.get('id'), 60);
+  const price = num(formData.get('price'), NaN);
+  const stock = Math.floor(num(formData.get('stock'), NaN));
+  const status = text(formData.get('status'), 10) === 'draft' ? 'draft' : 'active';
+  if (!Number.isFinite(price) || price < 0 || !Number.isFinite(stock) || stock < 0) return;
+  const db = createServiceClient();
+  const { data: cur } = await db.from('products').select('sale_price').eq('id', id).maybeSingle();
+  if (!cur) return;
+  const sale = cur.sale_price === null ? null : Number(cur.sale_price);
+  // a sale price must stay below the regular price
+  const sale_price = sale !== null && sale >= price ? null : sale;
+  await db.from('products').update({ price: round2(price), stock, status, sale_price }).eq('id', id);
+  refresh();
+  revalidatePath('/admin/products');
+}
+
+export async function bulkProductAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const list = ids(formData);
+  const action = text(formData.get('action'), 10);
+  if (!list.length) finish(formData, '/admin/products', 'error', 'Select at least one product first.');
+  const db = createServiceClient();
+  let error: { message: string } | null = null;
+  let label = '';
+  if (action === 'publish' || action === 'draft') {
+    ({ error } = await db.from('products').update({ status: action === 'publish' ? 'active' : 'draft' }).in('id', list));
+    label = action === 'publish' ? 'published' : 'moved to draft';
+  } else if (action === 'delete') {
+    ({ error } = await db.from('products').delete().in('id', list));
+    label = 'deleted';
+  } else {
+    finish(formData, '/admin/products', 'error', 'Unknown action.');
+  }
+  refresh();
+  if (error) finish(formData, '/admin/products', 'error', error.message);
+  finish(formData, '/admin/products', 'notice', `${list.length} product${list.length === 1 ? '' : 's'} ${label}.`);
+}
+
+export async function deleteSubscriber(formData: FormData): Promise<void> {
+  await requireAdmin();
+  await createServiceClient().from('subscribers').delete().eq('id', text(formData.get('id'), 60));
+  revalidatePath('/admin/subscribers');
+}
+
 /* ───────── categories ───────── */
 
 export async function saveCategory(formData: FormData): Promise<void> {
@@ -160,6 +233,25 @@ export async function deleteOrder(formData: FormData): Promise<void> {
   await createServiceClient().from('orders').delete().eq('id', text(formData.get('id'), 60));
   revalidatePath('/admin/orders');
   revalidatePath('/admin');
+}
+
+export async function bulkUpdateOrderStatus(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const list = ids(formData);
+  const status = text(formData.get('status'), 20);
+  if (!list.length) finish(formData, '/admin/orders', 'error', 'Select at least one order first.');
+  if (!(ORDER_STATUSES as readonly string[]).includes(status)) finish(formData, '/admin/orders', 'error', 'Choose a valid status.');
+  const { error } = await createServiceClient().from('orders').update({ status }).in('id', list);
+  revalidatePath('/admin', 'layout');
+  if (error) finish(formData, '/admin/orders', 'error', error.message);
+  finish(formData, '/admin/orders', 'notice', `${list.length} order${list.length === 1 ? '' : 's'} set to ${status}.`);
+}
+
+export async function saveOrderNote(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const note = text(formData.get('admin_notes'), 1000);
+  await createServiceClient().from('orders').update({ admin_notes: note }).eq('id', text(formData.get('id'), 60));
+  revalidatePath('/admin/orders');
 }
 
 export type ManualOrderInput = {

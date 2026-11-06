@@ -1,7 +1,7 @@
 import 'server-only';
 import { createServiceClient } from './supabase/server';
 import { rowToCategory, rowToProduct, rowToSettings } from './data';
-import { normalizeWhatsapp } from './whatsapp';
+import { computeKpis, customersFrom, dailySeries, statusCounts, stockAlerts } from './adminTools';
 import { defaultSettings } from './seed';
 import type { Category, Order, OrderItem, OrderStatus, Product, StoreSettings } from './types';
 
@@ -17,6 +17,7 @@ export const rowToOrder = (r: any): Order => ({
   city: r.city ?? '',
   address: r.address ?? '',
   notes: r.notes ?? '',
+  adminNotes: r.admin_notes ?? '',
   items: (Array.isArray(r.items) ? r.items : []) as OrderItem[],
   subtotal: Number(r.subtotal),
   shipping: Number(r.shipping),
@@ -47,45 +48,60 @@ export async function adminSettings(): Promise<StoreSettings> {
   return data ? rowToSettings(data) : defaultSettings;
 }
 
-export async function adminOrders(status?: string, limit = 200): Promise<Order[]> {
-  let q = createServiceClient().from('orders').select('*').order('created_at', { ascending: false }).limit(limit);
-  if (status) q = q.eq('status', status);
-  const { data, error } = await q;
-  if (error) throw new Error(error.message);
-  return (data ?? []).map(rowToOrder);
+/** Reads every row of a table (PostgREST returns at most 1000 rows per request), newest first. */
+async function fetchAll(table: string, orderCol: string, max = 20000): Promise<any[]> {
+  const db = createServiceClient();
+  const out: any[] = [];
+  for (let from = 0; from < max; from += 1000) {
+    const { data, error } = await db.from(table).select('*').order(orderCol, { ascending: false }).order('id').range(from, from + 999);
+    if (error) throw new Error(error.message);
+    out.push(...(data ?? []));
+    if ((data?.length ?? 0) < 1000) break;
+  }
+  return out;
 }
 
-export type DayPoint = { day: string; revenue: number; orders: number };
+export async function adminAllOrders(): Promise<Order[]> {
+  return (await fetchAll('orders', 'created_at')).map(rowToOrder);
+}
+
+export async function adminOrder(id: string): Promise<Order | null> {
+  if (!/^[0-9a-f-]{8,40}$/i.test(id)) return null;
+  const { data } = await createServiceClient().from('orders').select('*').eq('id', id).maybeSingle();
+  return data ? rowToOrder(data) : null;
+}
+
+export type Subscriber = { id: string; email: string; createdAt: string };
+export async function adminSubscribers(): Promise<Subscriber[]> {
+  return (await fetchAll('subscribers', 'created_at')).map((r) => ({ id: String(r.id), email: r.email, createdAt: r.created_at }));
+}
+
+/** Number of orders still waiting for the admin (shown as a badge in the sidebar). Never throws. */
+export async function pendingOrderCount(): Promise<number> {
+  try {
+    const { count } = await createServiceClient().from('orders').select('*', { count: 'exact', head: true }).eq('status', 'Pending');
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Raw table contents for the full JSON backup. */
+export async function adminRawBackup() {
+  const db = createServiceClient();
+  const [settings, categories, products, orders, subscribers] = await Promise.all([
+    db.from('store_settings').select('*').eq('id', 1).maybeSingle(),
+    fetchAll('categories', 'sort'),
+    fetchAll('products', 'created_at'),
+    fetchAll('orders', 'created_at'),
+    fetchAll('subscribers', 'created_at'),
+  ]);
+  return { exportedAt: new Date().toISOString(), store: 'VENORA JEWELRY', settings: settings.data ?? null, categories, products, orders, subscribers };
+}
 
 export async function dashboardStats() {
-  const db = createServiceClient();
-  const [products, orderCount, orderRows] = await Promise.all([
-    db.from('products').select('*', { count: 'exact', head: true }),
-    db.from('orders').select('*', { count: 'exact', head: true }),
-    db.from('orders').select('*').order('created_at', { ascending: false }).limit(5000),
-  ]);
-  const orders = (orderRows.data ?? []).map(rowToOrder);
+  const [products, orders] = await Promise.all([adminProducts(), adminAllOrders()]);
   const live = orders.filter((o) => o.status !== 'Cancelled');
-
-  const customers = new Set(orders.map((o) => normalizeWhatsapp(o.whatsapp).slice(-9) || o.whatsapp)).size;
-  const revenue = live.reduce((s, o) => s + o.total, 0);
-
-  // last 14 days
-  const days: DayPoint[] = [];
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - i);
-    days.push({ day: d.toISOString().slice(0, 10), revenue: 0, orders: 0 });
-  }
-  for (const o of live) {
-    const key = new Date(o.createdAt).toISOString().slice(0, 10);
-    const slot = days.find((d) => d.day === key);
-    if (slot) {
-      slot.revenue += o.total;
-      slot.orders += 1;
-    }
-  }
 
   const sold = new Map<string, { name: string; qty: number; revenue: number }>();
   for (const o of live) {
@@ -96,19 +112,16 @@ export async function dashboardStats() {
       sold.set(i.productId, cur);
     }
   }
-  const bestSellers = [...sold.values()].sort((a, b) => b.qty - a.qty).slice(0, 5);
-
-  const byStatus: Record<string, number> = {};
-  for (const o of orders) byStatus[o.status] = (byStatus[o.status] ?? 0) + 1;
 
   return {
-    totalProducts: products.count ?? 0,
-    totalOrders: orderCount.count ?? orders.length,
-    totalCustomers: customers,
-    revenue,
+    totalProducts: products.length,
+    totalOrders: orders.length,
+    totalCustomers: customersFrom(orders).length,
+    kpis: computeKpis(orders),
+    days: dailySeries(orders, 14),
+    alerts: stockAlerts(products),
     recent: orders.slice(0, 8),
-    days,
-    bestSellers,
-    byStatus,
+    bestSellers: [...sold.values()].sort((a, b) => b.qty - a.qty).slice(0, 5),
+    byStatus: statusCounts(orders),
   };
 }
