@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     const qty = Number(r.qty);
     if (!p || !Number.isInteger(qty) || qty < 1 || qty > 99) return NextResponse.json({ error: 'Invalid item' }, { status: 400 });
     const raw = r.variantOptions && typeof r.variantOptions === 'object' ? r.variantOptions as Record<string, unknown> : undefined;
-    const options = raw ? Object.fromEntries(Object.entries(raw).filter(([k, v]) => p.variants.some((g) => g.name === k && g.options.includes(String(v))).map(([k, v]) => [k, String(v)])) : undefined;
+    const options = raw ? Object.fromEntries(Object.entries(raw).filter(([k, v]) => p.variants.some((g) => g.name === k && g.options.includes(String(v)))).map(([k, v]) => [k, String(v)])) : undefined;
     const combo = options ? p.variantCombinations?.find((c) => p.variants.every((g) => c.options?.[g.name] === options[g.name])) : undefined;
     if (p.variants.length && (!combo || Object.keys(options ?? {}).length !== p.variants.length)) return NextResponse.json({ error: 'Invalid product option combination' }, { status: 400 });
     const price = combo ? (combo.salePrice !== null && combo.salePrice > 0 && combo.salePrice < combo.price ? combo.salePrice : combo.price) : effectivePrice(p);
