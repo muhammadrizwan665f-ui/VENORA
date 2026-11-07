@@ -9,6 +9,7 @@ export type CartLine = {
   price: number; // unit price at time of adding
   qty: number;
   variant?: string;
+  variantOptions?: Record<string, string>;
 };
 
 export const MAX_QTY = 99;
@@ -63,6 +64,7 @@ export function parseLines(raw: string | null): CartLine[] {
         price: l.price,
         qty: Math.min(MAX_QTY, Math.floor(l.qty)),
         variant: l.variant || undefined,
+        variantOptions: l.variantOptions && typeof l.variantOptions === 'object' ? l.variantOptions : undefined,
       }));
   } catch {
     return [];
