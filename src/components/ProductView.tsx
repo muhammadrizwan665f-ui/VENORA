@@ -61,7 +61,7 @@ export default function ProductView({ product }: { product: Product }) {
           <span className="gold-text font-serif text-4xl font-semibold">{money(price, settings.currencySymbol)}</span>
           {saving > 0 && (
             <>
-              <span className="text-lg text-mute line-through">{money(product.price, settings.currencySymbol)}</span>
+              <span className="text-lg text-mute line-through">{money(selectedCombination?.price ?? product.price, settings.currencySymbol)}</span>
               <span className="rounded-full border border-gold/40 px-2.5 py-0.5 text-xs text-gold">Save {money(saving, settings.currencySymbol)}</span>
             </>
           )}
