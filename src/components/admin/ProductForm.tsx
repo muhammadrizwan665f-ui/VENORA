@@ -171,8 +171,8 @@ export default function ProductForm({ product, categories }: { product?: Product
                     <div className="flex flex-wrap gap-2">
                       {combo.images.map((url, imageIndex) => <div key={url + imageIndex} className="relative h-20 w-20 overflow-hidden rounded-lg border border-gold/25"><img src={url} alt="" className="h-full w-full object-cover" /><button type="button" aria-label="Remove option image" onClick={() => setCombination(index, { images: combo.images.filter((_, j) => j !== imageIndex) })} className="absolute right-1 top-1 rounded-full bg-black/80 px-1.5 text-xs text-white">×</button></div>)}
                     </div>
-                    <label className="btn-outline inline-flex cursor-pointer !py-2 text-[11px]">{upBusy ? 'Uploading…' : 'Upload option images'}<input type="file" accept="image/*" multiple className="sr-only" onChange={(e) => uploadCombinationImages(index, e.target.files)} /></label>
-                    <L label="Or paste image URLs (one per line)"><textarea className="input-lux min-h-[68px] text-xs" value={combo.images.join('\n')} onChange={(e) => setCombination(index, { images: e.target.value.split('\n').map((url) => url.trim()).filter(Boolean) })} placeholder="https://.../gold-set.jpg" /></L>
+                    <label className="btn-outline inline-flex cursor-pointer !py-2 text-[11px]">{upBusy ? 'Uploading…' : 'Choose images to upload'}<input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" multiple className="sr-only" onChange={(e) => uploadCombinationImages(index, e.target.files)} /></label>
+                    <p className="text-xs text-mute">Select images from your device. JPG, PNG, WebP, AVIF or GIF · up to 5 MB each.</p>
                   </div>
                 </div>
               ))}
