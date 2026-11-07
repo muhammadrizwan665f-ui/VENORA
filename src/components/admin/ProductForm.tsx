@@ -6,7 +6,7 @@ import { saveProduct, deleteProduct, type ProductInput } from '@/app/admin/actio
 import type { Category, Product } from '@/lib/types';
 
 const blank: ProductInput = {
-  name: '', slug: '', category: '', description: '', price: 0, salePrice: null, images: [], variants: [],
+  name: '', slug: '', category: '', description: '', price: 0, salePrice: null, images: [], variants: [], variantCombinations: [],
   stock: 10, status: 'active', badge: null, rating: null, reviewCount: 0, bestSeller: false, sku: '',
 };
 
@@ -16,7 +16,7 @@ export default function ProductForm({ product, categories }: { product?: Product
   const start = (fn: () => Promise<void>) => { setPending(true); fn().finally(() => setPending(false)); };
   const [f, setF] = useState<ProductInput>(
     product
-      ? { id: product.id, name: product.name, slug: product.slug, category: product.category, description: product.description, price: product.price, salePrice: product.salePrice, images: product.images, variants: product.variants, stock: product.stock, status: product.status, badge: product.badge, rating: product.rating, reviewCount: product.reviewCount, bestSeller: product.bestSeller, sku: product.sku }
+      ? { id: product.id, name: product.name, slug: product.slug, category: product.category, description: product.description, price: product.price, salePrice: product.salePrice, images: product.images, variants: product.variants, variantCombinations: product.variantCombinations ?? [], stock: product.stock, status: product.status, badge: product.badge, rating: product.rating, reviewCount: product.reviewCount, bestSeller: product.bestSeller, sku: product.sku }
       : { ...blank, category: categories[0]?.slug ?? '' },
   );
   const [err, setErr] = useState('');
