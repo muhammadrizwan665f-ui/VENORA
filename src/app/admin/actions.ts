@@ -118,7 +118,14 @@ export async function saveProduct(input: ProductInput): Promise<ActionResult> {
   };
 
   const db = createServiceClient();
-  const res = input.id ? await db.from('products').update(row).eq('id', input.id).select('id').single() : await db.from('products').insert(row).select('id').single();
+  let res = input.id ? await db.from('products').update(row).eq('id', input.id).select('id').single() : await db.from('products').insert(row).select('id').single();
+  // Keep legacy admin saves working until the new Supabase migration is applied.
+  if (res.error?.code === '42703' && res.error.message.includes('variant_combinations')) {
+    if (variantCombinations.length) return { ok: false, error: 'Run supabase/migrations/20261107_product_variant_combinations.sql in Supabase before saving variant combinations.' };
+    const { variant_combinations: _unused, ...legacyRow } = row;
+    void _unused;
+    res = input.id ? await db.from('products').update(legacyRow).eq('id', input.id).select('id').single() : await db.from('products').insert(legacyRow).select('id').single();
+  }
   if (res.error) {
     return { ok: false, error: res.error.code === '23505' ? 'That URL slug is already used by another product.' : res.error.message };
   }
