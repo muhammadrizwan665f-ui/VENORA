@@ -23,6 +23,7 @@ export default function ProductForm({ product, categories }: { product?: Product
   const [upBusy, setUpBusy] = useState(false);
   const [pct, setPct] = useState('');
   const [imgUrl, setImgUrl] = useState('');
+  const [comboJson, setComboJson] = useState(JSON.stringify(product?.variantCombinations ?? [], null, 2));
   const set = <K extends keyof ProductInput>(k: K, v: ProductInput[K]) => setF((p) => ({ ...p, [k]: v }));
 
   async function upload(files: FileList | null) {
@@ -61,8 +62,11 @@ export default function ProductForm({ product, categories }: { product?: Product
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setErr('');
+    let variantCombinations;
+    try { variantCombinations = JSON.parse(comboJson || '[]'); if (!Array.isArray(variantCombinations)) throw new Error('Expected a JSON array.'); }
+    catch (e) { setErr(`Variant combinations: ${(e as Error).message}`); return; }
     start(async () => {
-      const r = await saveProduct(f);
+      const r = await saveProduct({ ...f, variantCombinations });
       if (!r.ok) return setErr(r.error || 'Could not save.');
       router.push('/admin/products');
       router.refresh();
@@ -114,6 +118,12 @@ export default function ProductForm({ product, categories }: { product?: Product
             </div>
           ))}
           <button type="button" className="btn-outline !py-2 text-[11px]" onClick={() => set('variants', [...f.variants, { name: '', options: [] }])}>+ Add variant group</button>
+          <div className="space-y-2 border-t border-gold/15 pt-4">
+            <p className="text-sm font-medium text-gold">Combination pricing, images &amp; inventory</p>
+            <p className="text-xs leading-relaxed text-mute">Add one entry for each sellable combination. The option names and values must match the groups above. Prices are regular prices; salePrice can be null. Example:</p>
+            <pre className="overflow-x-auto rounded-lg bg-ink p-3 text-[11px] text-mute">{`[\n  {\n    "options": { "Set": "Set 1", "Color": "Gold" },\n    "price": 29.99, "salePrice": 24.99,\n    "sku": "VEN-SET1-GOLD", "stock": 12,\n    "images": ["https://example.com/gold.jpg"]\n  }\n]`}</pre>
+            <textarea className="input-lux min-h-[220px] font-mono text-xs" value={comboJson} onChange={(e) => setComboJson(e.target.value)} spellCheck={false} aria-label="Variant combination JSON" />
+          </div>
         </Card>
       </div>
 
