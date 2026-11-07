@@ -23,13 +23,14 @@ export default function ProductView({ product }: { product: Product }) {
   const displayImages = selectedCombination?.images?.length ? selectedCombination.images : product.images;
   const stock = selectedCombination ? selectedCombination.stock : product.stock;
   const sku = selectedCombination?.sku || product.sku;
-  const soldOut = stock <= 0;
+  const invalidCombination = Boolean(product.variantCombinations?.length && product.variants.length && !selectedCombination);
+  const soldOut = stock <= 0 || invalidCombination;
   const maxQty = stock > 0 ? Math.min(stock, 99) : 99;
   const wished = isWished(product.id);
   const saving = (selectedCombination?.price ?? product.price) - price;
 
   const availability = soldOut
-    ? { text: 'Out of stock', cls: 'text-red-400' }
+    ? { text: invalidCombination ? 'Combination unavailable' : 'Out of stock', cls: 'text-red-400' }
     : stock <= 5
       ? { text: `Only ${stock} left`, cls: 'text-amber-400' }
       : { text: 'In stock', cls: 'text-emerald-400' };
