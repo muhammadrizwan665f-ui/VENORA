@@ -10,7 +10,7 @@ const mkOrder = (o: Partial<Order>): Order => ({
   createdAt: '2026-11-06T06:00:00Z', ...o,
 });
 const mkProduct = (p: Partial<Product>): Product => ({
-  id: 'p', slug: 'ring', name: 'Ring', category: 'rings', description: '', price: 10, salePrice: null, images: [], variants: [], stock: 5, status: 'active', badge: null, rating: null, reviewCount: 0, bestSeller: false, sku: 'R1', createdAt: '2026-11-01T00:00:00Z', ...p,
+  id: 'p', slug: 'ring', name: 'Ring', category: 'rings', description: '', price: 10, salePrice: null, images: [], variants: [], variantCombinations: [], stock: 5, status: 'active', badge: null, rating: null, reviewCount: 0, bestSeller: false, sku: 'R1', createdAt: '2026-11-01T00:00:00Z', ...p,
 });
 
 test('csvCell escapes quotes/commas/newlines and blocks formula injection', () => {
