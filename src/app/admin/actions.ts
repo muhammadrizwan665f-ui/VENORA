@@ -95,7 +95,7 @@ export async function saveProduct(input: ProductInput): Promise<ActionResult> {
     const price = Number(c?.price);
     const rawSale = c?.salePrice === null || c?.salePrice === undefined || c?.salePrice === '' ? null : Number(c.salePrice);
     return { options, price: Number.isFinite(price) && price >= 0 ? round2(price) : 0, salePrice: rawSale !== null && Number.isFinite(rawSale) && rawSale > 0 && rawSale < price ? round2(rawSale) : null, sku: String(c?.sku ?? '').slice(0, 60), stock: Math.max(0, Math.floor(Number(c?.stock) || 0)), images: (Array.isArray(c?.images) ? c.images : []).filter(safeUrl).slice(0, 12) };
-  }).filter((c) => Object.keys(c.options).length === variants.length && variants.length > 0);
+  }).filter((c, index, all) => Object.keys(c.options).length === variants.length && variants.length > 0 && all.findIndex((other) => JSON.stringify(Object.entries(other.options).sort(([a], [b]) => a.localeCompare(b))) === JSON.stringify(Object.entries(c.options).sort(([a], [b]) => a.localeCompare(b)))) === index);
   const rating = input.rating === null || input.rating === undefined || Number.isNaN(Number(input.rating)) ? null : Math.min(5, Math.max(0, Number(input.rating)));
 
   const row = {
