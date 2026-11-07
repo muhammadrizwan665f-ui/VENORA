@@ -22,7 +22,6 @@ export default function ProductForm({ product, categories }: { product?: Product
   const [err, setErr] = useState('');
   const [upBusy, setUpBusy] = useState(false);
   const [pct, setPct] = useState('');
-  const [imgUrl, setImgUrl] = useState('');
   const [combinations, setCombinations] = useState<VariantCombination[]>(product?.variantCombinations ?? []);
   const setCombination = (index: number, patch: Partial<VariantCombination>) => setCombinations((all) => all.map((item, i) => i === index ? { ...item, ...patch } : item));
   const addOptionGroup = (name: string) => {
@@ -124,14 +123,10 @@ export default function ProductForm({ product, categories }: { product?: Product
               </li>
             ))}
           </ul>
-          <div className="flex flex-wrap gap-3">
-            <label className="btn-outline cursor-pointer !py-2 text-[11px]">
-              {upBusy ? 'Uploading…' : 'Upload images'}
-              <input type="file" accept="image/*" multiple className="sr-only" onChange={(e) => upload(e.target.files)} />
-            </label>
-            <input className="input-lux min-w-0 flex-1" placeholder="…or paste an https:// image URL" value={imgUrl} onChange={(e) => setImgUrl(e.target.value)} />
-            <button type="button" className="btn-outline !py-2 text-[11px]" onClick={() => { if (/^https:\/\//i.test(imgUrl)) { set('images', [...f.images, imgUrl]); setImgUrl(''); } }}>Add URL</button>
-          </div>
+          <label className="btn-outline inline-flex cursor-pointer !py-2 text-[11px]">
+            {upBusy ? 'Uploading…' : 'Upload images'}
+            <input type="file" accept="image/*" multiple className="sr-only" onChange={(e) => upload(e.target.files)} />
+          </label>
         </Card>
 
         <Card title="Product options (all optional)">
@@ -172,7 +167,7 @@ export default function ProductForm({ product, categories }: { product?: Product
                       {combo.images.map((url, imageIndex) => <div key={url + imageIndex} className="relative h-20 w-20 overflow-hidden rounded-lg border border-gold/25"><img src={url} alt="" className="h-full w-full object-cover" /><button type="button" aria-label="Remove option image" onClick={() => setCombination(index, { images: combo.images.filter((_, j) => j !== imageIndex) })} className="absolute right-1 top-1 rounded-full bg-black/80 px-1.5 text-xs text-white">×</button></div>)}
                     </div>
                     <label className="btn-outline inline-flex cursor-pointer !py-2 text-[11px]">{upBusy ? 'Uploading…' : 'Upload option images'}<input type="file" accept="image/*" multiple className="sr-only" onChange={(e) => uploadCombinationImages(index, e.target.files)} /></label>
-                    <L label="Or paste image URLs (one per line)"><textarea className="input-lux min-h-[68px] text-xs" value={combo.images.join('\n')} onChange={(e) => setCombination(index, { images: e.target.value.split('\n').map((url) => url.trim()).filter(Boolean) })} placeholder="https://.../gold-set.jpg" /></L>
+                    <p className="text-xs text-mute">Upload images directly from your device. You can add multiple images and remove any preview before saving.</p>
                   </div>
                 </div>
               ))}
