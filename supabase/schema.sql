@@ -24,6 +24,7 @@ create table if not exists public.products (
   sale_price numeric(10,2) check (sale_price is null or sale_price >= 0),
   images jsonb not null default '[]'::jsonb,
   variants jsonb not null default '[]'::jsonb,   -- [{ "name": "Length", "options": ["16\"","18\""] }]
+  variant_combinations jsonb not null default '[]'::jsonb,
   stock int not null default 0 check (stock >= 0),
   status text not null default 'active' check (status in ('active','draft')),
   badge text check (badge in ('Hot','New')),
@@ -33,6 +34,7 @@ create table if not exists public.products (
   sku text not null default '',
   created_at timestamptz not null default now()
 );
+alter table public.products add column if not exists variant_combinations jsonb not null default '[]'::jsonb;
 create index if not exists products_category_idx on public.products(category_slug);
 create index if not exists products_status_idx on public.products(status);
 
