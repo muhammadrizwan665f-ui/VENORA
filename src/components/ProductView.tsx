@@ -16,7 +16,12 @@ export default function ProductView({ product }: { product: Product }) {
   const [chosen, setChosen] = useState<Record<string, string>>(() => Object.fromEntries(product.variants.map((v) => [v.name, v.options[0] ?? ''])));
 
   const summary = toSummary(product);
-  const selectedCombination = product.variantCombinations?.find((c) => product.variants.every((v) => c.options?.[v.name] === chosen[v.name]));
+  const selectedCombination = product.variants.length
+    ? product.variantCombinations?.find((combo) =>
+        product.variants.every((group) => combo.options?.[group.name] === chosen[group.name]) &&
+        Object.keys(combo.options ?? {}).length === product.variants.length,
+      )
+    : undefined;
   const price = selectedCombination ? (selectedCombination.salePrice !== null && selectedCombination.salePrice > 0 && selectedCombination.salePrice < selectedCombination.price ? selectedCombination.salePrice : selectedCombination.price) : effectivePrice(product);
   const variantText = product.variants.map((v) => `${v.name}: ${chosen[v.name]}`).join(', ') || undefined;
   const variantOptions = Object.keys(chosen).length ? chosen : undefined;
@@ -75,14 +80,21 @@ export default function ProductView({ product }: { product: Product }) {
                 <div className="flex flex-wrap gap-2">
                   {v.options.map((o) => {
                     const on = chosen[v.name] === o;
+                    const color = v.name.toLowerCase() === 'color' ? ({
+                      gold: '#d4af37', silver: '#c0c0c0', 'rose gold': '#b76e79',
+                      black: '#171717', white: '#f5f5f0', red: '#c62828',
+                      blue: '#2563eb', green: '#27834a', pink: '#e58baa',
+                      purple: '#8055a5', bronze: '#cd7f32',
+                    } as Record<string, string>)[o.toLowerCase()] : undefined;
                     return (
                       <button
                         key={o}
                         type="button"
                         aria-pressed={on}
-                        onClick={() => setChosen((c) => ({ ...c, [v.name]: o }))}
-                        className={`min-h-[44px] min-w-[48px] rounded-full border px-4 text-sm transition ${on ? 'border-gold bg-gold text-ink' : 'border-gold/30 text-ivory hover:border-gold'}`}
+                        onClick={() => setChosen((current) => ({ ...current, [v.name]: o }))}
+                        className={`inline-flex min-h-[44px] items-center gap-2 rounded-full border px-4 text-sm transition ${on ? 'border-gold bg-gold/15 text-gold' : 'border-gold/30 text-ivory hover:border-gold'}`}
                       >
+                        {color && <span aria-hidden="true" className="h-4 w-4 rounded-full border border-white/30 shadow-sm" style={{ backgroundColor: color }} />}
                         {o}
                       </button>
                     );
