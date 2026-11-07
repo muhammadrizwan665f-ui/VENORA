@@ -124,7 +124,12 @@ export default function StoreProvider({ settings, children }: { settings: StoreS
       updateLines((l) =>
         l.map((line) => {
           const p = byId.get(line.productId);
-          return p ? { ...line, name: p.name, ...(line.variantOptions ? {} : { price: effectivePrice(p), image: p.image }) } : line;
+          if (!p) return line;
+          if (line.variantOptions && p.variantCombinations?.length) {
+            const combo = p.variantCombinations.find((c) => Object.entries(line.variantOptions ?? {}).every(([k, v]) => c.options?.[k] === v));
+            if (combo) return { ...line, name: p.name, image: combo.images?.[0] || line.image, price: combo.salePrice !== null && combo.salePrice > 0 && combo.salePrice < combo.price ? combo.salePrice : combo.price };
+          }
+          return { ...line, name: p.name, price: effectivePrice(p), image: p.image };
         }),
       );
       setWishlist((prev) => {
