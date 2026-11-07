@@ -87,7 +87,7 @@ export type Order = {
 export type ProductSummary = Pick<
   Product,
   'id' | 'slug' | 'name' | 'price' | 'salePrice' | 'badge' | 'rating' | 'reviewCount' | 'stock' | 'category'
-> & { image: string; hasVariants: boolean };
+> & { image: string; hasVariants: boolean; variants: Variant[]; variantCombinations: VariantCombination[] };
 
 export const effectivePrice = (p: { price: number; salePrice: number | null }) =>
   p.salePrice !== null && p.salePrice > 0 && p.salePrice < p.price ? p.salePrice : p.price;
@@ -105,4 +105,6 @@ export const toSummary = (p: Product): ProductSummary => ({
   category: p.category,
   image: p.images[0] ?? '/images/hero.jpg',
   hasVariants: p.variants.length > 0,
+  variants: p.variants,
+  variantCombinations: p.variantCombinations ?? [],
 });
