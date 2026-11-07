@@ -22,7 +22,6 @@ export default function ProductForm({ product, categories }: { product?: Product
   const [err, setErr] = useState('');
   const [upBusy, setUpBusy] = useState(false);
   const [pct, setPct] = useState('');
-  const [imgUrl, setImgUrl] = useState('');
   const [combinations, setCombinations] = useState<VariantCombination[]>(product?.variantCombinations ?? []);
   const setCombination = (index: number, patch: Partial<VariantCombination>) => setCombinations((all) => all.map((item, i) => i === index ? { ...item, ...patch } : item));
   const addOptionGroup = (name: string) => {
@@ -126,11 +125,10 @@ export default function ProductForm({ product, categories }: { product?: Product
           </ul>
           <div className="flex flex-wrap gap-3">
             <label className="btn-outline cursor-pointer !py-2 text-[11px]">
-              {upBusy ? 'Uploading…' : 'Upload images'}
-              <input type="file" accept="image/*" multiple className="sr-only" onChange={(e) => upload(e.target.files)} />
+              {upBusy ? 'Uploading…' : 'Choose product images to upload'}
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" multiple className="sr-only" onChange={(e) => upload(e.target.files)} />
             </label>
-            <input className="input-lux min-w-0 flex-1" placeholder="…or paste an https:// image URL" value={imgUrl} onChange={(e) => setImgUrl(e.target.value)} />
-            <button type="button" className="btn-outline !py-2 text-[11px]" onClick={() => { if (/^https:\/\//i.test(imgUrl)) { set('images', [...f.images, imgUrl]); setImgUrl(''); } }}>Add URL</button>
+            <p className="text-xs text-mute">Select product photos from your device. JPG, PNG, WebP, AVIF or GIF · up to 5 MB each.</p>
           </div>
         </Card>
 
