@@ -13,7 +13,7 @@ const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice
 /**
  * Records a customer's WhatsApp checkout so the owner can see it in the admin dashboard.
  * Status is ALWAYS "Pending": nothing is ever confirmed or paid automatically.
- * Prices are re-read from the catalogue here, never trusted from the browser.
+ * Prices and selected combinations are re-read from the catalogue here, never trusted from the browser.
  */
 export async function POST(req: Request) {
   if (!isAdminConfigured()) return NextResponse.json({ recorded: false, reason: 'not-configured' }, { status: 503 });
@@ -49,7 +49,12 @@ export async function POST(req: Request) {
     const p = catalogue.find((x) => x.id === r.productId);
     const qty = Number(r.qty);
     if (!p || !Number.isInteger(qty) || qty < 1 || qty > 99) return NextResponse.json({ error: 'Invalid item' }, { status: 400 });
-    items.push({ productId: p.id, slug: p.slug, name: p.name, price: effectivePrice(p), qty, variant: str(r.variant, 120) || undefined });
+    const raw = r.variantOptions && typeof r.variantOptions === 'object' ? r.variantOptions as Record<string, unknown> : undefined;
+    const options = raw ? Object.fromEntries(Object.entries(raw).filter(([k, v]) => p.variants.some((g) => g.name === k && g.options.includes(String(v))).map(([k, v]) => [k, String(v)])) : undefined;
+    const combo = options ? p.variantCombinations?.find((c) => p.variants.every((g) => c.options?.[g.name] === options[g.name])) : undefined;
+    if (p.variants.length && (!combo || Object.keys(options ?? {}).length !== p.variants.length)) return NextResponse.json({ error: 'Invalid product option combination' }, { status: 400 });
+    const price = combo ? (combo.salePrice !== null && combo.salePrice > 0 && combo.salePrice < combo.price ? combo.salePrice : combo.price) : effectivePrice(p);
+    items.push({ productId: p.id, slug: p.slug, name: p.name, price, qty, variant: str(r.variant, 120) || undefined, variantOptions: options });
   }
 
   const settings = await getSettings();
