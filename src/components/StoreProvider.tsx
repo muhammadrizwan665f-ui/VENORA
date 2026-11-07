@@ -126,8 +126,9 @@ export default function StoreProvider({ settings, children }: { settings: StoreS
           const p = byId.get(line.productId);
           if (!p) return line;
           if (line.variantOptions && p.variantCombinations?.length) {
-            const combo = p.variantCombinations.find((c) => Object.entries(line.variantOptions ?? {}).every(([k, v]) => c.options?.[k] === v));
-            if (combo) return { ...line, name: p.name, image: combo.images?.[0] || line.image, price: combo.salePrice !== null && combo.salePrice > 0 && combo.salePrice < combo.price ? combo.salePrice : combo.price };
+            const combo = p.variantCombinations.find((c) => p.variants.every((group) => c.options?.[group.name] === line.variantOptions?.[group.name]));
+            if (!combo) return line;
+            return { ...line, name: p.name, image: combo.images?.[0] || line.image, price: combo.salePrice !== null && combo.salePrice > 0 && combo.salePrice < combo.price ? combo.salePrice : combo.price };
           }
           return { ...line, name: p.name, price: effectivePrice(p), image: p.image };
         }),
