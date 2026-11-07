@@ -25,6 +25,22 @@ export default function ProductForm({ product, categories }: { product?: Product
   const [imgUrl, setImgUrl] = useState('');
   const [combinations, setCombinations] = useState<VariantCombination[]>(product?.variantCombinations ?? []);
   const setCombination = (index: number, patch: Partial<VariantCombination>) => setCombinations((all) => all.map((item, i) => i === index ? { ...item, ...patch } : item));
+  const addOptionGroup = (name: string) => {
+    if (f.variants.some((group) => group.name.toLowerCase() === name.toLowerCase())) return;
+    set('variants', [...f.variants, { name, options: [] }]);
+  };
+  async function uploadCombinationImages(index: number, files: FileList | null) {
+    if (!files?.length) return;
+    setUpBusy(true); setErr('');
+    const fd = new FormData(); Array.from(files).forEach((file) => fd.append('files', file));
+    try {
+      const response = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Image upload failed');
+      setCombination(index, { images: [...(combinations[index]?.images ?? []), ...data.urls] });
+    } catch (error) { setErr((error as Error).message); }
+    finally { setUpBusy(false); }
+  }
   const generateCombinations = () => {
     const groups = f.variants.filter((v) => v.name.trim() && v.options.length);
     if (!groups.length) { setErr('Add variant groups and options first.'); return; }
@@ -118,37 +134,51 @@ export default function ProductForm({ product, categories }: { product?: Product
           </div>
         </Card>
 
-        <Card title="Variants (e.g. Length → 16&quot;, 18&quot;, 20&quot;)">
+        <Card title="Product options (all optional)">
+          <p className="text-sm leading-relaxed text-mute">Use only what this product needs. A product can have Set options, Color options, both together, or no options at all.</p>
+          <div className="flex flex-wrap gap-2">
+            {!f.variants.some((v) => v.name.toLowerCase() === 'set') && <button type="button" className="btn-outline !py-2 text-[11px]" onClick={() => addOptionGroup('Set')}>+ Add Set options</button>}
+            {!f.variants.some((v) => v.name.toLowerCase() === 'color') && <button type="button" className="btn-outline !py-2 text-[11px]" onClick={() => addOptionGroup('Color')}>+ Add Color options</button>}
+          </div>
           {f.variants.map((v, i) => (
-            <div key={i} className="grid gap-3 sm:grid-cols-[180px_1fr_auto]">
-              <input className="input-lux" placeholder="Name (Length)" value={v.name} onChange={(e) => set('variants', f.variants.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
-              <input className="input-lux" placeholder="Options, comma separated" value={v.options.join(', ')} onChange={(e) => set('variants', f.variants.map((x, j) => (j === i ? { ...x, options: e.target.value.split(',').map((s) => s.trimStart()) } : x)))} />
-              <button type="button" className="text-sm text-red-400" onClick={() => set('variants', f.variants.filter((_, j) => j !== i))}>Remove</button>
+            <div key={i} className="space-y-2 rounded-xl border border-gold/20 bg-ink/40 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-gold">{v.name} options</p>
+                <button type="button" className="text-xs text-red-400" onClick={() => { set('variants', f.variants.filter((_, j) => j !== i)); setCombinations((all) => all.filter((combo) => !(v.name in combo.options))); }}>Remove group</button>
+              </div>
+              <L label="Option values (separate with commas)">
+                <input className="input-lux" placeholder={v.name.toLowerCase() === 'color' ? 'Gold, Silver, Rose Gold' : 'Single Piece, Set 1, Set 2, Full Set'} value={v.options.join(', ')} onChange={(e) => set('variants', f.variants.map((x, j) => j === i ? { ...x, options: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) } : x))} />
+              </L>
             </div>
           ))}
-          <button type="button" className="btn-outline !py-2 text-[11px]" onClick={() => set('variants', [...f.variants, { name: '', options: [] }])}>+ Add variant group</button>
-          <div className="space-y-3 border-t border-gold/15 pt-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div><p className="text-sm font-medium text-gold">Combination pricing, images &amp; inventory</p><p className="mt-1 text-xs text-mute">Generate all Set × Color combinations, then customize each one.</p></div>
-              <button type="button" className="btn-outline !py-2 text-[11px]" onClick={generateCombinations}>Generate combinations</button>
-            </div>
-            {combinations.map((combo, index) => (
-              <div key={index} className="space-y-3 rounded-xl border border-gold/20 bg-ink/50 p-3">
-                <div className="flex items-center justify-between gap-2"><p className="text-xs font-semibold text-gold">Combination {index + 1}</p><button type="button" className="text-xs text-red-400" onClick={() => setCombinations((all) => all.filter((_, i) => i !== index))}>Remove</button></div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {f.variants.filter((v) => v.name.trim() && v.options.length).map((group) => (
-                    <L key={group.name} label={group.name}><select className="input-lux" value={combo.options[group.name] ?? ''} onChange={(e) => setCombination(index, { options: { ...combo.options, [group.name]: e.target.value } })}><option value="">Select {group.name}</option>{group.options.map((option) => <option key={option} value={option}>{option}</option>)}</select></L>
-                  ))}
-                  <L label="Regular price"><input className="input-lux" type="number" min="0" step="0.01" value={combo.price} onChange={(e) => setCombination(index, { price: Number(e.target.value) })} /></L>
-                  <L label="Sale price (optional)"><input className="input-lux" type="number" min="0" step="0.01" value={combo.salePrice ?? ''} onChange={(e) => setCombination(index, { salePrice: e.target.value === '' ? null : Number(e.target.value) })} /></L>
-                  <L label="SKU"><input className="input-lux" value={combo.sku} onChange={(e) => setCombination(index, { sku: e.target.value })} /></L>
-                  <L label="Stock"><input className="input-lux" type="number" min="0" step="1" value={combo.stock} onChange={(e) => setCombination(index, { stock: Number(e.target.value) })} /></L>
-                  <div className="sm:col-span-2"><L label="Image URLs (one per line)"><textarea className="input-lux min-h-[76px] text-xs" value={combo.images.join('\n')} onChange={(e) => setCombination(index, { images: e.target.value.split('\n').map((url) => url.trim()).filter(Boolean) })} placeholder="https://.../gold-set.jpg" /></L></div>
-                </div>
+          {f.variants.length > 0 && (
+            <div className="space-y-3 border-t border-gold/15 pt-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div><p className="text-sm font-medium text-gold">Price, images &amp; stock for each option</p><p className="mt-1 text-xs text-mute">Generate combinations only after adding the options you want. Set-only, Color-only and Set + Color are all supported.</p></div>
+                <button type="button" className="btn-outline !py-2 text-[11px]" onClick={generateCombinations}>Build option combinations</button>
               </div>
-            ))}
-            {!combinations.length && <p className="rounded-lg border border-dashed border-gold/20 p-4 text-xs text-mute">No combinations yet. Add option groups above, then generate combinations.</p>}
-          </div>
+              {combinations.map((combo, index) => (
+                <div key={index} className="space-y-3 rounded-xl border border-gold/20 bg-ink/50 p-3">
+                  <div className="flex items-center justify-between gap-2"><p className="text-sm font-semibold text-gold">{Object.entries(combo.options).map(([key, value]) => `${key}: ${value}`).join(' · ') || `Option ${index + 1}`}</p><button type="button" className="text-xs text-red-400" onClick={() => setCombinations((all) => all.filter((_, i) => i !== index))}>Remove</button></div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <L label="Regular price"><input className="input-lux" type="number" min="0" step="0.01" value={combo.price} onChange={(e) => setCombination(index, { price: Number(e.target.value) })} /></L>
+                    <L label="Sale price (optional)"><input className="input-lux" type="number" min="0" step="0.01" value={combo.salePrice ?? ''} onChange={(e) => setCombination(index, { salePrice: e.target.value === '' ? null : Number(e.target.value) })} /></L>
+                    <L label="SKU"><input className="input-lux" value={combo.sku} onChange={(e) => setCombination(index, { sku: e.target.value })} /></L>
+                    <L label="Stock"><input className="input-lux" type="number" min="0" step="1" value={combo.stock} onChange={(e) => setCombination(index, { stock: Number(e.target.value) })} /></L>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="label-lux">Combination images</p>
+                    <div className="flex flex-wrap gap-2">
+                      {combo.images.map((url, imageIndex) => <div key={url + imageIndex} className="relative h-20 w-20 overflow-hidden rounded-lg border border-gold/25"><img src={url} alt="" className="h-full w-full object-cover" /><button type="button" aria-label="Remove option image" onClick={() => setCombination(index, { images: combo.images.filter((_, j) => j !== imageIndex) })} className="absolute right-1 top-1 rounded-full bg-black/80 px-1.5 text-xs text-white">×</button></div>)}
+                    </div>
+                    <label className="btn-outline inline-flex cursor-pointer !py-2 text-[11px]">{upBusy ? 'Uploading…' : 'Upload option images'}<input type="file" accept="image/*" multiple className="sr-only" onChange={(e) => uploadCombinationImages(index, e.target.files)} /></label>
+                    <L label="Or paste image URLs (one per line)"><textarea className="input-lux min-h-[68px] text-xs" value={combo.images.join('\n')} onChange={(e) => setCombination(index, { images: e.target.value.split('\n').map((url) => url.trim()).filter(Boolean) })} placeholder="https://.../gold-set.jpg" /></L>
+                  </div>
+                </div>
+              ))}
+              {!combinations.length && <p className="rounded-lg border border-dashed border-gold/20 p-4 text-xs text-mute">No combinations configured yet. Add option values above, then build combinations.</p>}
+            </div>
+          )}
         </Card>
       </div>
 
