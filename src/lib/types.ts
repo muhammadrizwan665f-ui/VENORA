@@ -1,4 +1,5 @@
 export type Variant = { name: string; options: string[] };
+export type VariantCombination = { options: Record<string, string>; price: number; salePrice: number | null; sku: string; stock: number; images: string[] };
 
 export type Product = {
   id: string;
@@ -10,6 +11,7 @@ export type Product = {
   salePrice: number | null; // current selling price when discounted
   images: string[];
   variants: Variant[];
+  variantCombinations: VariantCombination[];
   stock: number;
   status: 'active' | 'draft';
   badge: 'Hot' | 'New' | null;
@@ -59,6 +61,7 @@ export type OrderItem = {
   price: number;
   qty: number;
   variant?: string;
+  variantOptions?: Record<string, string>;
 };
 
 export type Order = {
@@ -84,7 +87,7 @@ export type Order = {
 export type ProductSummary = Pick<
   Product,
   'id' | 'slug' | 'name' | 'price' | 'salePrice' | 'badge' | 'rating' | 'reviewCount' | 'stock' | 'category'
-> & { image: string; hasVariants: boolean };
+> & { image: string; hasVariants: boolean; variants: Variant[]; variantCombinations: VariantCombination[] };
 
 export const effectivePrice = (p: { price: number; salePrice: number | null }) =>
   p.salePrice !== null && p.salePrice > 0 && p.salePrice < p.price ? p.salePrice : p.price;
@@ -102,4 +105,6 @@ export const toSummary = (p: Product): ProductSummary => ({
   category: p.category,
   image: p.images[0] ?? '/images/hero.jpg',
   hasVariants: p.variants.length > 0,
+  variants: p.variants,
+  variantCombinations: p.variantCombinations ?? [],
 });

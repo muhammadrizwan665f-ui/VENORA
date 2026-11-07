@@ -71,7 +71,7 @@ export default function CartView() {
       body: JSON.stringify({
         ref,
         customer: f,
-        items: lines.map((l) => ({ productId: l.productId, qty: l.qty, variant: l.variant })),
+        items: lines.map((l) => ({ productId: l.productId, qty: l.qty, variant: l.variant, variantOptions: l.variantOptions })),
       }),
     })
       .then((r) => setSent((s) => (s ? { ...s, recorded: r.ok } : s)))

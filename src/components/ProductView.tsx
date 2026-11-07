@@ -16,22 +16,28 @@ export default function ProductView({ product }: { product: Product }) {
   const [chosen, setChosen] = useState<Record<string, string>>(() => Object.fromEntries(product.variants.map((v) => [v.name, v.options[0] ?? ''])));
 
   const summary = toSummary(product);
-  const price = effectivePrice(product);
+  const selectedCombination = product.variantCombinations?.find((c) => product.variants.every((v) => c.options?.[v.name] === chosen[v.name]));
+  const price = selectedCombination ? (selectedCombination.salePrice !== null && selectedCombination.salePrice > 0 && selectedCombination.salePrice < selectedCombination.price ? selectedCombination.salePrice : selectedCombination.price) : effectivePrice(product);
   const variantText = product.variants.map((v) => `${v.name}: ${chosen[v.name]}`).join(', ') || undefined;
-  const soldOut = product.stock <= 0;
-  const maxQty = product.stock > 0 ? Math.min(product.stock, 99) : 99;
+  const variantOptions = Object.keys(chosen).length ? chosen : undefined;
+  const displayImages = selectedCombination?.images?.length ? selectedCombination.images : product.images;
+  const stock = selectedCombination ? selectedCombination.stock : product.stock;
+  const sku = selectedCombination?.sku || product.sku;
+  const invalidCombination = Boolean(product.variantCombinations?.length && product.variants.length && !selectedCombination);
+  const soldOut = stock <= 0 || invalidCombination;
+  const maxQty = stock > 0 ? Math.min(stock, 99) : 99;
   const wished = isWished(product.id);
-  const saving = product.price - price;
+  const saving = (selectedCombination?.price ?? product.price) - price;
 
   const availability = soldOut
-    ? { text: 'Out of stock', cls: 'text-red-400' }
-    : product.stock <= 5
-      ? { text: `Only ${product.stock} left`, cls: 'text-amber-400' }
+    ? { text: invalidCombination ? 'Combination unavailable' : 'Out of stock', cls: 'text-red-400' }
+    : stock <= 5
+      ? { text: `Only ${stock} left`, cls: 'text-amber-400' }
       : { text: 'In stock', cls: 'text-emerald-400' };
 
   return (
     <div className="container-x grid gap-8 py-8 lg:grid-cols-2 lg:gap-14 lg:py-12">
-      <Gallery images={product.images} name={product.name} />
+      <Gallery images={displayImages} name={product.name} />
 
       <div className="lg:pt-2">
         {product.badge && (
@@ -111,7 +117,7 @@ export default function ProductView({ product }: { product: Product }) {
             className="!min-h-[56px] !text-sm"
           />
           <div className="grid grid-cols-[1fr_auto] gap-3">
-            <button type="button" disabled={soldOut} onClick={() => addToCart({ product: summary, qty, variant: variantText })} className="btn-outline">
+            <button type="button" disabled={soldOut} onClick={() => addToCart({ product: summary, qty, variant: variantText, variantOptions, price, image: displayImages[0] || summary.image })} className="btn-outline">
               {soldOut ? 'Sold out' : 'Add to cart'}
             </button>
             <button
@@ -129,7 +135,7 @@ export default function ProductView({ product }: { product: Product }) {
 
         <dl className="mt-8 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-gold/20 pt-6 text-sm">
           <dt className="text-mute">SKU</dt>
-          <dd className="text-ivory/90">{product.sku || '—'}</dd>
+          <dd className="text-ivory/90">{sku || '—'}</dd>
           <dt className="text-mute">Shipping</dt>
           <dd className="text-ivory/90">Worldwide · luxury packaging included</dd>
           <dt className="text-mute">Ordering</dt>

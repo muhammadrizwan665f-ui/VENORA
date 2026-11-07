@@ -4,7 +4,7 @@ import { createPublicClient } from './supabase/server';
 import { isSupabaseConfigured } from './supabase/env';
 import { defaultSettings, seedCategories, seedProducts } from './seed';
 import { normalizeWhatsapp } from './whatsapp';
-import { effectivePrice, type Category, type Product, type StoreSettings, type Variant } from './types';
+import { effectivePrice, type Category, type Product, type StoreSettings, type Variant, type VariantCombination } from './types';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const rowToProduct = (r: any): Product => ({
@@ -17,6 +17,7 @@ export const rowToProduct = (r: any): Product => ({
   salePrice: r.sale_price === null || r.sale_price === undefined ? null : Number(r.sale_price),
   images: Array.isArray(r.images) ? r.images : [],
   variants: Array.isArray(r.variants) ? (r.variants as Variant[]) : [],
+  variantCombinations: Array.isArray(r.variant_combinations) ? (r.variant_combinations as VariantCombination[]) : [],
   stock: Number(r.stock ?? 0),
   status: r.status === 'draft' ? 'draft' : 'active',
   badge: r.badge === 'Hot' || r.badge === 'New' ? r.badge : null,

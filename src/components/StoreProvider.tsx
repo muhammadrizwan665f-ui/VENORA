@@ -9,7 +9,7 @@ import { addLine, countItems, parseLines, removeLine, setQty as setQtyFn, totals
 const CART_KEY = 'venora.cart.v1';
 const WISH_KEY = 'venora.wish.v1';
 
-type AddInput = { product: Pick<ProductSummary, 'id' | 'slug' | 'name' | 'price' | 'salePrice' | 'image'>; qty?: number; variant?: string };
+type AddInput = { product: Pick<ProductSummary, 'id' | 'slug' | 'name' | 'price' | 'salePrice' | 'image'>; qty?: number; variant?: string; variantOptions?: Record<string, string>; price?: number; image?: string };
 
 type Ctx = {
   settings: StoreSettings;
@@ -96,16 +96,17 @@ export default function StoreProvider({ settings, children }: { settings: StoreS
   );
 
   const addToCart = useCallback(
-    ({ product, qty = 1, variant }: AddInput) => {
+    ({ product, qty = 1, variant, variantOptions, price, image }: AddInput) => {
       updateLines((l) =>
         addLine(l, {
           productId: product.id,
           slug: product.slug,
           name: product.name,
-          image: product.image,
-          price: effectivePrice(product),
+          image: image || product.image,
+          price: Number.isFinite(price) ? Number(price) : effectivePrice(product),
           qty,
           variant,
+          variantOptions,
         }),
       );
       notify(`${product.name} added to your cart`, { label: 'View cart', href: '/cart' });
@@ -123,7 +124,13 @@ export default function StoreProvider({ settings, children }: { settings: StoreS
       updateLines((l) =>
         l.map((line) => {
           const p = byId.get(line.productId);
-          return p ? { ...line, price: effectivePrice(p), name: p.name, image: p.image } : line;
+          if (!p) return line;
+          if (line.variantOptions && p.variantCombinations?.length) {
+            const combo = p.variantCombinations.find((c) => p.variants.every((group) => c.options?.[group.name] === line.variantOptions?.[group.name]));
+            if (!combo) return line;
+            return { ...line, name: p.name, image: combo.images?.[0] || line.image, price: combo.salePrice !== null && combo.salePrice > 0 && combo.salePrice < combo.price ? combo.salePrice : combo.price };
+          }
+          return { ...line, name: p.name, price: effectivePrice(p), image: p.image };
         }),
       );
       setWishlist((prev) => {

@@ -3,10 +3,10 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { saveProduct, deleteProduct, type ProductInput } from '@/app/admin/actions';
-import type { Category, Product } from '@/lib/types';
+import type { Category, Product, VariantCombination } from '@/lib/types';
 
 const blank: ProductInput = {
-  name: '', slug: '', category: '', description: '', price: 0, salePrice: null, images: [], variants: [],
+  name: '', slug: '', category: '', description: '', price: 0, salePrice: null, images: [], variants: [], variantCombinations: [],
   stock: 10, status: 'active', badge: null, rating: null, reviewCount: 0, bestSeller: false, sku: '',
 };
 
@@ -16,13 +16,25 @@ export default function ProductForm({ product, categories }: { product?: Product
   const start = (fn: () => Promise<void>) => { setPending(true); fn().finally(() => setPending(false)); };
   const [f, setF] = useState<ProductInput>(
     product
-      ? { id: product.id, name: product.name, slug: product.slug, category: product.category, description: product.description, price: product.price, salePrice: product.salePrice, images: product.images, variants: product.variants, stock: product.stock, status: product.status, badge: product.badge, rating: product.rating, reviewCount: product.reviewCount, bestSeller: product.bestSeller, sku: product.sku }
+      ? { id: product.id, name: product.name, slug: product.slug, category: product.category, description: product.description, price: product.price, salePrice: product.salePrice, images: product.images, variants: product.variants, variantCombinations: product.variantCombinations ?? [], stock: product.stock, status: product.status, badge: product.badge, rating: product.rating, reviewCount: product.reviewCount, bestSeller: product.bestSeller, sku: product.sku }
       : { ...blank, category: categories[0]?.slug ?? '' },
   );
   const [err, setErr] = useState('');
   const [upBusy, setUpBusy] = useState(false);
   const [pct, setPct] = useState('');
   const [imgUrl, setImgUrl] = useState('');
+  const [combinations, setCombinations] = useState<VariantCombination[]>(product?.variantCombinations ?? []);
+  const setCombination = (index: number, patch: Partial<VariantCombination>) => setCombinations((all) => all.map((item, i) => i === index ? { ...item, ...patch } : item));
+  const generateCombinations = () => {
+    const groups = f.variants.filter((v) => v.name.trim() && v.options.length);
+    if (!groups.length) { setErr('Add variant groups and options first.'); return; }
+    const combinations = groups.reduce<Record<string, string>[]>((rows, group) => rows.flatMap((row) => group.options.map((option) => ({ ...row, [group.name]: option }))), [{}]);
+    setCombinations(combinations.slice(0, 250).map((options) => {
+      const old = combinationsState.find((item) => Object.entries(options).every(([key, value]) => item.options[key] === value));
+      return old ?? { options, price: f.price, salePrice: null, sku: '', stock: f.stock, images: [] };
+    }));
+  };
+  const combinationsState = combinations;
   const set = <K extends keyof ProductInput>(k: K, v: ProductInput[K]) => setF((p) => ({ ...p, [k]: v }));
 
   async function upload(files: FileList | null) {
@@ -61,8 +73,9 @@ export default function ProductForm({ product, categories }: { product?: Product
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setErr('');
+    const variantCombinations = combinations;
     start(async () => {
-      const r = await saveProduct(f);
+      const r = await saveProduct({ ...f, variantCombinations });
       if (!r.ok) return setErr(r.error || 'Could not save.');
       router.push('/admin/products');
       router.refresh();
@@ -114,6 +127,28 @@ export default function ProductForm({ product, categories }: { product?: Product
             </div>
           ))}
           <button type="button" className="btn-outline !py-2 text-[11px]" onClick={() => set('variants', [...f.variants, { name: '', options: [] }])}>+ Add variant group</button>
+          <div className="space-y-3 border-t border-gold/15 pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div><p className="text-sm font-medium text-gold">Combination pricing, images &amp; inventory</p><p className="mt-1 text-xs text-mute">Generate all Set × Color combinations, then customize each one.</p></div>
+              <button type="button" className="btn-outline !py-2 text-[11px]" onClick={generateCombinations}>Generate combinations</button>
+            </div>
+            {combinations.map((combo, index) => (
+              <div key={index} className="space-y-3 rounded-xl border border-gold/20 bg-ink/50 p-3">
+                <div className="flex items-center justify-between gap-2"><p className="text-xs font-semibold text-gold">Combination {index + 1}</p><button type="button" className="text-xs text-red-400" onClick={() => setCombinations((all) => all.filter((_, i) => i !== index))}>Remove</button></div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {f.variants.filter((v) => v.name.trim() && v.options.length).map((group) => (
+                    <L key={group.name} label={group.name}><select className="input-lux" value={combo.options[group.name] ?? ''} onChange={(e) => setCombination(index, { options: { ...combo.options, [group.name]: e.target.value } })}><option value="">Select {group.name}</option>{group.options.map((option) => <option key={option} value={option}>{option}</option>)}</select></L>
+                  ))}
+                  <L label="Regular price"><input className="input-lux" type="number" min="0" step="0.01" value={combo.price} onChange={(e) => setCombination(index, { price: Number(e.target.value) })} /></L>
+                  <L label="Sale price (optional)"><input className="input-lux" type="number" min="0" step="0.01" value={combo.salePrice ?? ''} onChange={(e) => setCombination(index, { salePrice: e.target.value === '' ? null : Number(e.target.value) })} /></L>
+                  <L label="SKU"><input className="input-lux" value={combo.sku} onChange={(e) => setCombination(index, { sku: e.target.value })} /></L>
+                  <L label="Stock"><input className="input-lux" type="number" min="0" step="1" value={combo.stock} onChange={(e) => setCombination(index, { stock: Number(e.target.value) })} /></L>
+                  <div className="sm:col-span-2"><L label="Image URLs (one per line)"><textarea className="input-lux min-h-[76px] text-xs" value={combo.images.join('\n')} onChange={(e) => setCombination(index, { images: e.target.value.split('\n').map((url) => url.trim()).filter(Boolean) })} placeholder="https://.../gold-set.jpg" /></L></div>
+                </div>
+              </div>
+            ))}
+            {!combinations.length && <p className="rounded-lg border border-dashed border-gold/20 p-4 text-xs text-mute">No combinations yet. Add option groups above, then generate combinations.</p>}
+          </div>
         </Card>
       </div>
 
