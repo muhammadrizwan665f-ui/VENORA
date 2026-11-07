@@ -53,6 +53,7 @@ export async function POST(req: Request) {
     const options = raw ? Object.fromEntries(Object.entries(raw).filter(([k, v]) => p.variants.some((g) => g.name === k && g.options.includes(String(v)))).map(([k, v]) => [k, String(v)])) : undefined;
     const combo = options ? p.variantCombinations?.find((c) => p.variants.every((g) => c.options?.[g.name] === options[g.name])) : undefined;
     if (p.variantCombinations?.length && p.variants.length && (!combo || Object.keys(options ?? {}).length !== p.variants.length)) return NextResponse.json({ error: 'Invalid product option combination' }, { status: 400 });
+    if (combo && combo.stock < qty) return NextResponse.json({ error: 'Selected option is out of stock' }, { status: 409 });
     const price = combo ? (combo.salePrice !== null && combo.salePrice > 0 && combo.salePrice < combo.price ? combo.salePrice : combo.price) : effectivePrice(p);
     items.push({ productId: p.id, slug: p.slug, name: p.name, price, qty, variant: str(r.variant, 120) || undefined, variantOptions: options });
   }
