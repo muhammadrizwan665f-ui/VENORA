@@ -1,4 +1,5 @@
 export type Variant = { name: string; options: string[] };
+export type VariantCombination = { options: Record<string, string>; price: number; salePrice: number | null; sku: string; stock: number; images: string[] };
 
 export type Product = {
   id: string;
@@ -10,6 +11,7 @@ export type Product = {
   salePrice: number | null; // current selling price when discounted
   images: string[];
   variants: Variant[];
+  variantCombinations: VariantCombination[];
   stock: number;
   status: 'active' | 'draft';
   badge: 'Hot' | 'New' | null;
@@ -59,6 +61,7 @@ export type OrderItem = {
   price: number;
   qty: number;
   variant?: string;
+  variantOptions?: Record<string, string>;
 };
 
 export type Order = {
