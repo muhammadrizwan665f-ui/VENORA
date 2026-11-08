@@ -73,6 +73,7 @@ export default function ProductForm({ product, categories }: { product?: Product
           <ImageUploader value={f.images} onChange={(u) => setF((p) => ({ ...p, images: u(p.images) }))} max={12} label="Upload Images" />
         </Card>
 
+        <p className="text-[10px] uppercase tracking-widest text-mute">Product form v2 · build {process.env.NEXT_PUBLIC_BUILD_SHA}</p>
         <Card title="Variants (optional)">
           <p className="text-sm leading-relaxed text-mute">Add a variant for every colour, style or full set you sell. Each variant has its own name, colour, price, stock and photos. Leave empty if the product has no variants.</p>
           {rows.length > 0 && (

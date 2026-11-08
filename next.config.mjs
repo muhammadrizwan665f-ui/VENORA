@@ -8,6 +8,8 @@ const collections = ['necklaces', 'bracelets', 'rings', 'earrings', 'anklets', '
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Shown in the admin product form so you can see which commit is actually live.
+  env: { NEXT_PUBLIC_BUILD_SHA: (process.env.WORKERS_CI_COMMIT_SHA || 'local').slice(0, 7) },
   eslint: { ignoreDuringBuilds: true },
   images: {
     // Cloudflare Workers has no built-in image optimiser; images are served as-is (still lazy-loaded).
