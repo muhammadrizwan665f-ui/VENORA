@@ -80,12 +80,13 @@ export default function ProductView({ product }: { product: Product }) {
                 <div className="flex flex-wrap gap-2">
                   {v.options.map((o) => {
                     const on = chosen[v.name] === o;
-                    const color = v.name.toLowerCase() === 'color' ? ({
+                    const comboColor = product.variantCombinations?.find((c) => c.options?.[v.name] === o)?.color;
+                    const color = comboColor ?? (v.name.toLowerCase() === 'color' ? ({
                       gold: '#d4af37', silver: '#c0c0c0', 'rose gold': '#b76e79',
                       black: '#171717', white: '#f5f5f0', red: '#c62828',
                       blue: '#2563eb', green: '#27834a', pink: '#e58baa',
                       purple: '#8055a5', bronze: '#cd7f32',
-                    } as Record<string, string>)[o.toLowerCase()] : undefined;
+                    } as Record<string, string>)[o.toLowerCase()] : undefined);
                     return (
                       <button
                         key={o}

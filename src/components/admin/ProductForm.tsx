@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { saveProduct, deleteProduct, type ProductInput } from '@/app/admin/actions';
+import ImageUploader from './ImageUploader';
 import type { Category, Product, VariantCombination } from '@/lib/types';
 
 const blank: ProductInput = {
@@ -20,63 +21,15 @@ export default function ProductForm({ product, categories }: { product?: Product
       : { ...blank, category: categories[0]?.slug ?? '' },
   );
   const [err, setErr] = useState('');
-  const [upBusy, setUpBusy] = useState(false);
   const [pct, setPct] = useState('');
-  const [combinations, setCombinations] = useState<VariantCombination[]>(product?.variantCombinations ?? []);
-  const setCombination = (index: number, patch: Partial<VariantCombination>) => setCombinations((all) => all.map((item, i) => i === index ? { ...item, ...patch } : item));
-  const addOptionGroup = (name: string) => {
-    if (f.variants.some((group) => group.name.toLowerCase() === name.toLowerCase())) return;
-    set('variants', [...f.variants, { name, options: [] }]);
-  };
-  async function uploadCombinationImages(index: number, files: FileList | null) {
-    if (!files?.length) return;
-    setUpBusy(true); setErr('');
-    const fd = new FormData(); Array.from(files).forEach((file) => fd.append('files', file));
-    try {
-      const response = await fetch('/api/admin/upload', { method: 'POST', body: fd });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Image upload failed');
-      setCombination(index, { images: [...(combinations[index]?.images ?? []), ...data.urls] });
-    } catch (error) { setErr((error as Error).message); }
-    finally { setUpBusy(false); }
-  }
-  const generateCombinations = () => {
-    const groups = f.variants.filter((v) => v.name.trim() && v.options.length);
-    if (!groups.length) { setErr('Add variant groups and options first.'); return; }
-    const combinations = groups.reduce<Record<string, string>[]>((rows, group) => rows.flatMap((row) => group.options.map((option) => ({ ...row, [group.name]: option }))), [{}]);
-    setCombinations(combinations.slice(0, 250).map((options) => {
-      const old = combinationsState.find((item) => Object.entries(options).every(([key, value]) => item.options[key] === value));
-      return old ?? { options, price: f.price, salePrice: null, sku: '', stock: f.stock, images: [] };
-    }));
-  };
-  const combinationsState = combinations;
+  type Row = { name: string; color: string; price: number; salePrice: number | null; sku: string; stock: number; images: string[] };
+  const [label, setLabel] = useState(product?.variants?.[0]?.name && product.variants.length === 1 ? product.variants[0].name : 'Option');
+  const [rows, setRows] = useState<Row[]>(() => (product?.variantCombinations ?? []).map((c) => ({
+    name: Object.values(c.options).join(' · '), color: c.color ?? '', price: c.price, salePrice: c.salePrice, sku: c.sku, stock: c.stock, images: c.images ?? [],
+  })));
+  const patchRow = (i: number, patch: Partial<Row>) => setRows((all) => all.map((r, x) => (x === i ? { ...r, ...patch } : r)));
+  const addRow = () => setRows((all) => [...all, { name: '', color: '', price: f.price, salePrice: null, sku: '', stock: f.stock, images: [] }].slice(0, 100));
   const set = <K extends keyof ProductInput>(k: K, v: ProductInput[K]) => setF((p) => ({ ...p, [k]: v }));
-
-  async function upload(files: FileList | null) {
-    if (!files?.length) return;
-    setUpBusy(true);
-    setErr('');
-    const fd = new FormData();
-    Array.from(files).forEach((x) => fd.append('files', x));
-    try {
-      const r = await fetch('/api/admin/upload', { method: 'POST', body: fd });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || 'Upload failed');
-      set('images', [...f.images, ...d.urls]);
-    } catch (e) {
-      setErr((e as Error).message);
-    } finally {
-      setUpBusy(false);
-    }
-  }
-
-  const move = (i: number, d: number) => {
-    const a = [...f.images];
-    const j = i + d;
-    if (j < 0 || j >= a.length) return;
-    [a[i], a[j]] = [a[j], a[i]];
-    set('images', a);
-  };
 
   function applyPct(v: string) {
     setPct(v);
@@ -88,9 +41,16 @@ export default function ProductForm({ product, categories }: { product?: Product
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setErr('');
-    const variantCombinations = combinations;
+    const names = rows.map((r) => r.name.trim());
+    if (names.some((n) => !n)) return setErr('Every variant needs a name (for example Purple, Full Set or Set of 3).');
+    if (new Set(names.map((n) => n.toLowerCase())).size !== names.length) return setErr('Variant names must be different from each other.');
+    const group = label.trim() || 'Option';
+    const variants = rows.length ? [{ name: group, options: names }] : [];
+    const variantCombinations: VariantCombination[] = rows.map((r, i) => ({
+      options: { [group]: names[i] }, price: r.price, salePrice: r.salePrice, sku: r.sku, stock: r.stock, images: r.images, ...(r.color ? { color: r.color } : {}),
+    }));
     start(async () => {
-      const r = await saveProduct({ ...f, variantCombinations });
+      const r = await saveProduct({ ...f, variants, variantCombinations });
       if (!r.ok) return setErr(r.error || 'Could not save.');
       router.push('/admin/products');
       router.refresh();
@@ -110,73 +70,39 @@ export default function ProductForm({ product, categories }: { product?: Product
         </Card>
 
         <Card title="Images (first image is the main one)">
-          <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-            {f.images.map((u, i) => (
-              <li key={u + i} className="space-y-1">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={u} alt="" className="aspect-square w-full rounded-lg border border-gold/30 bg-black object-cover" />
-                <div className="flex justify-between text-xs">
-                  <button type="button" onClick={() => move(i, -1)} aria-label="Move earlier" className="px-2 text-gold">←</button>
-                  <button type="button" onClick={() => set('images', f.images.filter((_, x) => x !== i))} className="text-red-400">Remove</button>
-                  <button type="button" onClick={() => move(i, 1)} aria-label="Move later" className="px-2 text-gold">→</button>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <div className="flex flex-wrap gap-3">
-            <label className="btn-outline cursor-pointer !py-2 text-[11px]">
-              {upBusy ? 'Uploading…' : 'Choose product images to upload'}
-              <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" multiple className="sr-only" onChange={(e) => upload(e.target.files)} />
-            </label>
-            <p className="text-xs text-mute">Select product photos from your device. JPG, PNG, WebP, AVIF or GIF · up to 5 MB each.</p>
-          </div>
+          <ImageUploader value={f.images} onChange={(u) => setF((p) => ({ ...p, images: u(p.images) }))} max={12} label="Upload Images" />
         </Card>
 
-        <Card title="Product options (all optional)">
-          <p className="text-sm leading-relaxed text-mute">Use only what this product needs. A product can have Set options, Color options, both together, or no options at all.</p>
-          <div className="flex flex-wrap gap-2">
-            {!f.variants.some((v) => v.name.toLowerCase() === 'set') && <button type="button" className="btn-outline !py-2 text-[11px]" onClick={() => addOptionGroup('Set')}>+ Add Set options</button>}
-            {!f.variants.some((v) => v.name.toLowerCase() === 'color') && <button type="button" className="btn-outline !py-2 text-[11px]" onClick={() => addOptionGroup('Color')}>+ Add Color options</button>}
-          </div>
-          {f.variants.map((v, i) => (
-            <div key={i} className="space-y-2 rounded-xl border border-gold/20 bg-ink/40 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-gold">{v.name} options</p>
-                <button type="button" className="text-xs text-red-400" onClick={() => { set('variants', f.variants.filter((_, j) => j !== i)); setCombinations((all) => all.filter((combo) => !(v.name in combo.options))); }}>Remove group</button>
+        <Card title="Variants (optional)">
+          <p className="text-sm leading-relaxed text-mute">Add a variant for every colour, style or full set you sell. Each variant has its own name, colour, price, stock and photos. Leave empty if the product has no variants.</p>
+          {rows.length > 0 && (
+            <L label="What do customers choose? (e.g. Color, Set, Style)"><input className="input-lux max-w-xs" value={label} maxLength={40} onChange={(e) => setLabel(e.target.value)} /></L>
+          )}
+          {rows.map((r, i) => (
+            <div key={i} className="space-y-3 rounded-xl border border-gold/20 bg-ink/50 p-3">
+              <div className="flex flex-wrap items-end gap-3">
+                <label className="min-w-[10rem] flex-1"><span className="label-lux">Name</span><input className="input-lux" placeholder="Purple, Full Set, Set of 3…" maxLength={40} value={r.name} onChange={(e) => patchRow(i, { name: e.target.value })} /></label>
+                <label><span className="label-lux">Colour</span>
+                  <span className="flex items-center gap-2">
+                    <input type="color" aria-label="Variant colour" className="h-10 w-12 cursor-pointer rounded border border-gold/30 bg-transparent" value={r.color || '#d4af37'} onChange={(e) => patchRow(i, { color: e.target.value })} />
+                    {r.color && <button type="button" className="text-xs text-mute underline" onClick={() => patchRow(i, { color: '' })}>None</button>}
+                  </span>
+                </label>
+                <button type="button" className="pb-2 text-xs text-red-400" onClick={() => setRows((all) => all.filter((_, x) => x !== i))}>Remove variant</button>
               </div>
-              <L label="Option values (separate with commas)">
-                <input className="input-lux" placeholder={v.name.toLowerCase() === 'color' ? 'Gold, Silver, Rose Gold' : 'Single Piece, Set 1, Set 2, Full Set'} value={v.options.join(', ')} onChange={(e) => set('variants', f.variants.map((x, j) => j === i ? { ...x, options: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) } : x))} />
-              </L>
+              <div className="grid gap-3 sm:grid-cols-4">
+                <L label="Regular price"><input className="input-lux" type="number" min="0" step="0.01" value={r.price} onChange={(e) => patchRow(i, { price: Number(e.target.value) })} /></L>
+                <L label="Sale price (optional)"><input className="input-lux" type="number" min="0" step="0.01" value={r.salePrice ?? ''} onChange={(e) => patchRow(i, { salePrice: e.target.value === '' ? null : Number(e.target.value) })} /></L>
+                <L label="Stock"><input className="input-lux" type="number" min="0" step="1" value={r.stock} onChange={(e) => patchRow(i, { stock: Number(e.target.value) })} /></L>
+                <L label="SKU"><input className="input-lux" value={r.sku} onChange={(e) => patchRow(i, { sku: e.target.value })} /></L>
+              </div>
+              <div className="space-y-2">
+                <p className="label-lux">Variant images</p>
+                <ImageUploader value={r.images} onChange={(u) => setRows((all) => all.map((x, j) => (j === i ? { ...x, images: u(x.images) } : x)))} max={12} label="Upload Images" />
+              </div>
             </div>
           ))}
-          {f.variants.length > 0 && (
-            <div className="space-y-3 border-t border-gold/15 pt-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div><p className="text-sm font-medium text-gold">Price, images &amp; stock for each option</p><p className="mt-1 text-xs text-mute">Generate combinations only after adding the options you want. Set-only, Color-only and Set + Color are all supported.</p></div>
-                <button type="button" className="btn-outline !py-2 text-[11px]" onClick={generateCombinations}>Build option combinations</button>
-              </div>
-              {combinations.map((combo, index) => (
-                <div key={index} className="space-y-3 rounded-xl border border-gold/20 bg-ink/50 p-3">
-                  <div className="flex items-center justify-between gap-2"><p className="text-sm font-semibold text-gold">{Object.entries(combo.options).map(([key, value]) => `${key}: ${value}`).join(' · ') || `Option ${index + 1}`}</p><button type="button" className="text-xs text-red-400" onClick={() => setCombinations((all) => all.filter((_, i) => i !== index))}>Remove</button></div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <L label="Regular price"><input className="input-lux" type="number" min="0" step="0.01" value={combo.price} onChange={(e) => setCombination(index, { price: Number(e.target.value) })} /></L>
-                    <L label="Sale price (optional)"><input className="input-lux" type="number" min="0" step="0.01" value={combo.salePrice ?? ''} onChange={(e) => setCombination(index, { salePrice: e.target.value === '' ? null : Number(e.target.value) })} /></L>
-                    <L label="SKU"><input className="input-lux" value={combo.sku} onChange={(e) => setCombination(index, { sku: e.target.value })} /></L>
-                    <L label="Stock"><input className="input-lux" type="number" min="0" step="1" value={combo.stock} onChange={(e) => setCombination(index, { stock: Number(e.target.value) })} /></L>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="label-lux">Combination images</p>
-                    <div className="flex flex-wrap gap-2">
-                      {combo.images.map((url, imageIndex) => <div key={url + imageIndex} className="relative h-20 w-20 overflow-hidden rounded-lg border border-gold/25"><img src={url} alt="" className="h-full w-full object-cover" /><button type="button" aria-label="Remove option image" onClick={() => setCombination(index, { images: combo.images.filter((_, j) => j !== imageIndex) })} className="absolute right-1 top-1 rounded-full bg-black/80 px-1.5 text-xs text-white">×</button></div>)}
-                    </div>
-                    <label className="btn-outline inline-flex cursor-pointer !py-2 text-[11px]">{upBusy ? 'Uploading…' : 'Choose images to upload'}<input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" multiple className="sr-only" onChange={(e) => uploadCombinationImages(index, e.target.files)} /></label>
-                    <p className="text-xs text-mute">Select images from your device. JPG, PNG, WebP, AVIF or GIF · up to 5 MB each.</p>
-                  </div>
-                </div>
-              ))}
-              {!combinations.length && <p className="rounded-lg border border-dashed border-gold/20 p-4 text-xs text-mute">No combinations configured yet. Add option values above, then build combinations.</p>}
-            </div>
-          )}
+          <button type="button" className="btn-outline !py-2 text-[11px]" onClick={addRow}>+ Add variant</button>
         </Card>
       </div>
 

@@ -1,5 +1,5 @@
 export type Variant = { name: string; options: string[] };
-export type VariantCombination = { options: Record<string, string>; price: number; salePrice: number | null; sku: string; stock: number; images: string[] };
+export type VariantCombination = { options: Record<string, string>; price: number; salePrice: number | null; sku: string; stock: number; images: string[]; color?: string };
 
 export type Product = {
   id: string;
