@@ -55,3 +55,8 @@ Or deploy from your computer: `npm run deploy` (after `npx wrangler login`).
 - `/necklaces`, `/bracelets`, `/rings`, `/earrings`, `/anklets`, `/jewelry-sets` rewrite to `/collections/<slug>`.
 - Rate limiting is in-memory (per server instance); add firewall rules at your host for production.
 - Security: admin routes are guarded by middleware **and** re-checked in every page/server action/upload route; the service-role key is only read in server code.
+
+## Deploying
+Cloudflare Workers Builds deploys every push to `main` automatically (Worker name: `venora`). Do not use "Retry build" on an old
+build: it redeploys that old commit over the newer one. To roll back deliberately use Deployments → ⋯ → Rollback.
+After a deploy, the admin product form shows "Product form v2 · build <commit>" so you can see which commit is live.
