@@ -106,5 +106,6 @@ export const toSummary = (p: Product): ProductSummary => ({
   image: p.images[0] ?? '/images/hero.jpg',
   hasVariants: p.variants.length > 0,
   variants: p.variants,
-  variantCombinations: p.variantCombinations ?? [],
+  // Cards/cart only need the cover photo of each variant; keeping every photo here would bloat every listing page.
+  variantCombinations: (p.variantCombinations ?? []).map((c) => ({ ...c, images: c.images.slice(0, 1) })),
 });
