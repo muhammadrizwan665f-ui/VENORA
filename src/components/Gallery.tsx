@@ -27,6 +27,7 @@ export default function Gallery({ images, name }: { images: string[]; name: stri
 
   return (
     <div>
+      <div className="relative">
       <button
         type="button"
         onClick={() => setZoom(true)}
@@ -35,9 +36,17 @@ export default function Gallery({ images, name }: { images: string[]; name: stri
       >
         <SmartImage src={list[i]} alt={`${name} — view ${i + 1}`} priority sizes="(min-width:1024px) 50vw, 100vw" className="object-cover transition duration-700 group-hover:scale-105" />
       </button>
+      {list.length > 1 && (
+        <>
+          <button type="button" aria-label="Previous image" onClick={() => go(-1)} className="absolute left-2 top-1/2 grid h-10 w-10 -translate-y-1/2 rotate-180 place-items-center rounded-full bg-black/60 text-gold backdrop-blur hover:bg-black/80"><ArrowIcon width={18} height={18} /></button>
+          <button type="button" aria-label="Next image" onClick={() => go(1)} className="absolute right-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-black/60 text-gold backdrop-blur hover:bg-black/80"><ArrowIcon width={18} height={18} /></button>
+          <span className="pointer-events-none absolute bottom-2 right-2 rounded-full bg-black/60 px-2.5 py-0.5 text-xs text-ivory">{i + 1} / {list.length}</span>
+        </>
+      )}
+      </div>
 
       {list.length > 1 && (
-        <ul className="mt-3 grid grid-cols-4 gap-2 sm:gap-3">
+        <ul className="mt-3 grid grid-cols-5 gap-2 sm:grid-cols-6 sm:gap-2.5">
           {list.map((src, idx) => (
             <li key={src + idx}>
               <button

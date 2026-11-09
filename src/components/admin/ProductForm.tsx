@@ -23,12 +23,15 @@ export default function ProductForm({ product, categories }: { product?: Product
   const [err, setErr] = useState('');
   const [pct, setPct] = useState('');
   type Row = { name: string; color: string; price: number; salePrice: number | null; sku: string; stock: number; images: string[] };
-  const [label, setLabel] = useState(product?.variants?.[0]?.name && product.variants.length === 1 ? product.variants[0].name : 'Option');
+  const initialLabel = product?.variants?.length === 1 ? product.variants[0].name : 'Colour';
+  const [kind, setKind] = useState<'Colour' | 'Set' | 'Custom'>(/^colou?r$/i.test(initialLabel) ? 'Colour' : /^sets?$/i.test(initialLabel) ? 'Set' : 'Custom');
+  const [custom, setCustom] = useState(/^(colou?r|sets?)$/i.test(initialLabel) ? '' : initialLabel);
+  const label = kind === 'Custom' ? custom : kind;
   const [rows, setRows] = useState<Row[]>(() => (product?.variantCombinations ?? []).map((c) => ({
     name: Object.values(c.options).join(' · '), color: c.color ?? '', price: c.price, salePrice: c.salePrice, sku: c.sku, stock: c.stock, images: c.images ?? [],
   })));
   const patchRow = (i: number, patch: Partial<Row>) => setRows((all) => all.map((r, x) => (x === i ? { ...r, ...patch } : r)));
-  const addRow = () => setRows((all) => [...all, { name: '', color: '', price: f.price, salePrice: null, sku: '', stock: f.stock, images: [] }].slice(0, 100));
+  const addRow = () => setRows((all) => [...all, { name: '', color: '', price: f.price, salePrice: null, sku: '', stock: f.stock, images: [] }].slice(0, 500));
   const set = <K extends keyof ProductInput>(k: K, v: ProductInput[K]) => setF((p) => ({ ...p, [k]: v }));
 
   function applyPct(v: string) {
@@ -70,40 +73,56 @@ export default function ProductForm({ product, categories }: { product?: Product
         </Card>
 
         <Card title="Images (first image is the main one)">
-          <ImageUploader value={f.images} onChange={(u) => setF((p) => ({ ...p, images: u(p.images) }))} max={12} label="Upload Images" />
+          <ImageUploader value={f.images} onChange={(u) => setF((p) => ({ ...p, images: u(p.images) }))} max={1000} label="Upload Images" />
         </Card>
 
         <p className="text-[10px] uppercase tracking-widest text-mute">Product form v2 · build {process.env.NEXT_PUBLIC_BUILD_SHA}</p>
         <Card title="Variants (optional)">
-          <p className="text-sm leading-relaxed text-mute">Add a variant for every colour, style or full set you sell. Each variant has its own name, colour, price, stock and photos. Leave empty if the product has no variants.</p>
-          {rows.length > 0 && (
-            <L label="What do customers choose? (e.g. Color, Set, Style)"><input className="input-lux max-w-xs" value={label} maxLength={40} onChange={(e) => setLabel(e.target.value)} /></L>
-          )}
+          <p className="text-sm leading-relaxed text-mute">
+            Does this product come in different <b className="text-ivory">colours</b> or different <b className="text-ivory">sets</b>? Add one variant for each.
+            When a customer picks a variant on the product page, they see that variant&apos;s own photos, price and stock. No variants? Leave this empty.
+          </p>
+          <div>
+            <p className="label-lux">1. What are the variants?</p>
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Variant type">
+              {([['Colour', 'Colours (e.g. Purple, Black)'], ['Set', 'Sets (e.g. Necklace Set, Full Set)'], ['Custom', 'Something else']] as const).map(([k, text]) => (
+                <button key={k} type="button" role="radio" aria-checked={kind === k} onClick={() => setKind(k)}
+                  className={`rounded-full border px-4 py-2 text-sm transition ${kind === k ? 'border-gold bg-gold/15 text-gold' : 'border-gold/30 text-ivory hover:border-gold'}`}>{text}</button>
+              ))}
+            </div>
+            {kind === 'Custom' && <input className="input-lux mt-3 max-w-xs" placeholder="e.g. Size, Style, Length" maxLength={40} value={custom} onChange={(e) => setCustom(e.target.value)} />}
+          </div>
+          <p className="label-lux">2. Add your variants</p>
           {rows.map((r, i) => (
-            <div key={i} className="space-y-3 rounded-xl border border-gold/20 bg-ink/50 p-3">
+            <div key={i} className="space-y-4 rounded-xl border border-gold/25 bg-ink/50 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-semibold text-gold">{label || 'Variant'} {i + 1}{r.name.trim() ? ` — ${r.name.trim()}` : ''}</p>
+                <button type="button" className="text-xs text-red-400" onClick={() => setRows((all) => all.filter((_, x) => x !== i))}>Remove</button>
+              </div>
               <div className="flex flex-wrap items-end gap-3">
-                <label className="min-w-[10rem] flex-1"><span className="label-lux">Name</span><input className="input-lux" placeholder="Purple, Full Set, Set of 3…" maxLength={40} value={r.name} onChange={(e) => patchRow(i, { name: e.target.value })} /></label>
-                <label><span className="label-lux">Colour</span>
-                  <span className="flex items-center gap-2">
-                    <input type="color" aria-label="Variant colour" className="h-10 w-12 cursor-pointer rounded border border-gold/30 bg-transparent" value={r.color || '#d4af37'} onChange={(e) => patchRow(i, { color: e.target.value })} />
-                    {r.color && <button type="button" className="text-xs text-mute underline" onClick={() => patchRow(i, { color: '' })}>None</button>}
-                  </span>
-                </label>
-                <button type="button" className="pb-2 text-xs text-red-400" onClick={() => setRows((all) => all.filter((_, x) => x !== i))}>Remove variant</button>
+                <label className="min-w-[12rem] flex-1"><span className="label-lux">Name</span><input className="input-lux" placeholder={kind === 'Set' ? 'e.g. Necklace + Earrings' : kind === 'Colour' ? 'e.g. Purple' : 'Name'} maxLength={40} value={r.name} onChange={(e) => patchRow(i, { name: e.target.value })} /></label>
+                {kind === 'Colour' && (
+                  <label><span className="label-lux">Colour shown to customers</span>
+                    <span className="flex items-center gap-2">
+                      <input type="color" aria-label="Variant colour" className="h-11 w-14 cursor-pointer rounded border border-gold/30 bg-transparent" value={r.color || '#d4af37'} onChange={(e) => patchRow(i, { color: e.target.value })} />
+                      {r.color ? <button type="button" className="text-xs text-mute underline" onClick={() => patchRow(i, { color: '' })}>Clear</button> : <span className="text-xs text-mute">not set</span>}
+                    </span>
+                  </label>
+                )}
               </div>
               <div className="grid gap-3 sm:grid-cols-4">
-                <L label="Regular price"><input className="input-lux" type="number" min="0" step="0.01" value={r.price} onChange={(e) => patchRow(i, { price: Number(e.target.value) })} /></L>
+                <L label="Price"><input className="input-lux" type="number" min="0" step="0.01" value={r.price} onChange={(e) => patchRow(i, { price: Number(e.target.value) })} /></L>
                 <L label="Sale price (optional)"><input className="input-lux" type="number" min="0" step="0.01" value={r.salePrice ?? ''} onChange={(e) => patchRow(i, { salePrice: e.target.value === '' ? null : Number(e.target.value) })} /></L>
-                <L label="Stock"><input className="input-lux" type="number" min="0" step="1" value={r.stock} onChange={(e) => patchRow(i, { stock: Number(e.target.value) })} /></L>
-                <L label="SKU"><input className="input-lux" value={r.sku} onChange={(e) => patchRow(i, { sku: e.target.value })} /></L>
+                <L label="Stock (how many)"><input className="input-lux" type="number" min="0" step="1" value={r.stock} onChange={(e) => patchRow(i, { stock: Number(e.target.value) })} /></L>
+                <L label="SKU (optional)"><input className="input-lux" value={r.sku} onChange={(e) => patchRow(i, { sku: e.target.value })} /></L>
               </div>
               <div className="space-y-2">
-                <p className="label-lux">Variant images</p>
-                <ImageUploader value={r.images} onChange={(u) => setRows((all) => all.map((x, j) => (j === i ? { ...x, images: u(x.images) } : x)))} max={12} label="Upload Images" />
+                <p className="label-lux">Photos of this {label.toLowerCase() || 'variant'} <span className="normal-case tracking-normal text-mute">— as many as you like; the first one is the cover</span></p>
+                <ImageUploader value={r.images} onChange={(u) => setRows((all) => all.map((x, j) => (j === i ? { ...x, images: u(x.images) } : x)))} max={1000} label="Upload Images" />
               </div>
             </div>
           ))}
-          <button type="button" className="btn-outline !py-2 text-[11px]" onClick={addRow}>+ Add variant</button>
+          <button type="button" className="btn-outline !py-2.5 text-[11px]" onClick={addRow}>+ Add {kind === 'Colour' ? 'colour' : kind === 'Set' ? 'set' : 'variant'}</button>
         </Card>
       </div>
 

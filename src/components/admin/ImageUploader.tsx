@@ -3,7 +3,8 @@
 import { useRef, useState } from 'react';
 
 const ACCEPT = 'image/jpeg,image/png,image/webp,image/avif,image/gif';
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 10 * 1024 * 1024;
+const BATCH = 4; // files per request (keeps each request small); the total number of images is not limited
 
 function send(files: File[], onProgress: (pct: number) => void): Promise<string[]> {
   return new Promise((resolve, reject) => {
@@ -30,7 +31,7 @@ function send(files: File[], onProgress: (pct: number) => void): Promise<string[
  * `onChange` receives an updater so concurrent uploads never overwrite each other.
  */
 export default function ImageUploader({
-  value, onChange, max = 12, multiple = true, label = 'Upload Images', hint,
+  value, onChange, max = 1000, multiple = true, label = 'Upload Images', hint,
 }: {
   value: string[];
   onChange: (update: (prev: string[]) => string[]) => void;
@@ -55,19 +56,26 @@ export default function ImageUploader({
     const problems: string[] = [];
     const ok = files.filter((f) => {
       if (!ACCEPT.split(',').includes(f.type)) { problems.push(`${f.name}: only JPG, PNG, WebP, AVIF or GIF images are allowed.`); return false; }
-      if (f.size > MAX_BYTES) { problems.push(`${f.name} is larger than 5 MB.`); return false; }
+      if (f.size > MAX_BYTES) { problems.push(`${f.name} is larger than 10 MB.`); return false; }
       return true;
-    }).slice(0, Math.min(room, 10));
+    }).slice(0, room);
     if (files.length > ok.length && !problems.length) problems.push(`Only ${ok.length} of ${files.length} images were added (limit reached).`);
     if (!ok.length) return setErr(problems.join(' '));
     const local = ok.map((f) => URL.createObjectURL(f));
     setPreviews(local); setBusy(true); setPct(0);
+    let done = 0;
     try {
-      const urls = await send(ok, setPct);
-      onChange((prev) => (multiple ? [...prev, ...urls].slice(0, max) : urls.slice(0, 1)));
+      // Upload in small batches so any number of photos works; each finished batch appears immediately.
+      for (let i = 0; i < ok.length; i += BATCH) {
+        const batch = ok.slice(i, i + BATCH);
+        const urls = await send(batch, (p) => setPct(Math.round(((done + (p / 100) * batch.length) / ok.length) * 100)));
+        done += batch.length;
+        onChange((prev) => (multiple ? [...prev, ...urls].slice(0, max) : urls.slice(0, 1)));
+        setPreviews((cur) => cur.slice(batch.length));
+      }
       if (problems.length) setErr(problems.join(' '));
     } catch (e) {
-      setErr((e as Error).message);
+      setErr(`${done ? `${done} of ${ok.length} uploaded. ` : ''}${(e as Error).message}`);
     } finally {
       local.forEach((u) => URL.revokeObjectURL(u));
       setPreviews([]); setBusy(false);
@@ -120,7 +128,7 @@ export default function ImageUploader({
         <button type="button" className="btn-gold !py-2.5 text-[11px]" disabled={busy} onClick={() => input.current?.click()}>
           {busy ? `Uploading… ${pct}%` : label}
         </button>
-        <p className="text-xs text-mute">{hint ?? `Click the button or drop ${multiple ? 'images' : 'an image'} here · JPG, PNG, WebP, AVIF or GIF · up to 5 MB each`}</p>
+        <p className="text-xs text-mute">{hint ?? `Click the button or drop ${multiple ? 'images' : 'an image'} here · JPG, PNG, WebP, AVIF or GIF · up to 10 MB each`}</p>
         {busy && (
           <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-gold/15" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
             <div className="h-full bg-gold transition-all" style={{ width: `${pct}%` }} />

@@ -42,7 +42,7 @@ export default function ProductView({ product }: { product: Product }) {
 
   return (
     <div className="container-x grid gap-8 py-8 lg:grid-cols-2 lg:gap-14 lg:py-12">
-      <Gallery images={displayImages} name={product.name} />
+      <Gallery key={`${product.id}:${JSON.stringify(chosen)}`} images={displayImages} name={product.name} />
 
       <div className="lg:pt-2">
         {product.badge && (
@@ -80,8 +80,11 @@ export default function ProductView({ product }: { product: Product }) {
                 <div className="flex flex-wrap gap-2">
                   {v.options.map((o) => {
                     const on = chosen[v.name] === o;
-                    const comboColor = product.variantCombinations?.find((c) => c.options?.[v.name] === o)?.color;
-                    const color = comboColor ?? (v.name.toLowerCase() === 'color' ? ({
+                    const combo = product.variantCombinations?.find((c) => c.options?.[v.name] === o);
+                    const comboColor = combo?.color;
+                    const thumb = product.variants.length === 1 && !comboColor ? combo?.images?.[0] : undefined;
+                    const out = Boolean(combo && combo.stock <= 0);
+                    const color = comboColor ?? (/^colou?r$/i.test(v.name) ? ({
                       gold: '#d4af37', silver: '#c0c0c0', 'rose gold': '#b76e79',
                       black: '#171717', white: '#f5f5f0', red: '#c62828',
                       blue: '#2563eb', green: '#27834a', pink: '#e58baa',
@@ -96,7 +99,12 @@ export default function ProductView({ product }: { product: Product }) {
                         className={`inline-flex min-h-[44px] items-center gap-2 rounded-full border px-4 text-sm transition ${on ? 'border-gold bg-gold/15 text-gold' : 'border-gold/30 text-ivory hover:border-gold'}`}
                       >
                         {color && <span aria-hidden="true" className="h-4 w-4 rounded-full border border-white/30 shadow-sm" style={{ backgroundColor: color }} />}
-                        {o}
+                        {thumb && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={thumb} alt="" loading="lazy" className="h-7 w-7 rounded-full border border-white/20 object-cover" />
+                        )}
+                        <span className={out ? 'opacity-50 line-through' : ''}>{o}</span>
+                        {out && <span className="text-[10px] uppercase tracking-wide text-red-400">Sold out</span>}
                       </button>
                     );
                   })}
